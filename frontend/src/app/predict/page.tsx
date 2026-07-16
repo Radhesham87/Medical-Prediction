@@ -1,0 +1,238 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Eraser, Sparkles, FileDown } from "lucide-react";
+import { api, type PredictPayload } from "@/lib/api";
+import { getRole, isAuthenticated } from "@/lib/auth";
+import { Spinner } from "@/components/loading";
+import { PredictionTable } from "@/components/prediction-table";
+import { CATEGORIES, DEGREES, type PredictionResponse } from "@/types";
+
+const EMPTY = {
+  student_name: "",
+  mode: "score" as "score" | "air",
+  score: "",
+  air: "",
+  degrees: [] as string[],
+  gender: "Male" as "Male" | "Female",
+  category: "OPEN",
+};
+
+export default function PredictPage() {
+  const router = useRouter();
+  const [form, setForm] = useState(EMPTY);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [savedId, setSavedId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) router.replace("/login");
+    else if (getRole() === "admin") router.replace("/admin");
+  }, [router]);
+
+  const toggleDegree = (d: string) => {
+    setForm((f) => {
+      if (d === "All") {
+        const all = f.degrees.length === DEGREES.length ? [] : [...DEGREES];
+        return { ...f, degrees: all };
+      }
+      const has = f.degrees.includes(d);
+      return { ...f, degrees: has ? f.degrees.filter((x) => x !== d) : [...f.degrees, d] };
+    });
+  };
+
+  const clear = () => {
+    setForm(EMPTY);
+    setResult(null);
+    setSavedId(null);
+  };
+
+  const submit = async () => {
+    if (!form.student_name.trim()) return toast.error("Enter the student name");
+    if (form.degrees.length === 0) return toast.error("Select at least one degree");
+    if (form.mode === "score" && !form.score) return toast.error("Enter a NEET score");
+    if (form.mode === "air" && !form.air) return toast.error("Enter an AIR");
+
+    const payload: PredictPayload = {
+      student_name: form.student_name.trim(),
+      mode: form.mode,
+      degrees: form.degrees,
+      gender: form.gender,
+      category: form.category,
+      ...(form.mode === "score" ? { score: Number(form.score) } : { air: Number(form.air) }),
+    };
+
+    setLoading(true);
+    try {
+      const res = await api.predict(payload);
+      setResult(res);
+      const history = await api.history();
+      setSavedId(history[0]?.id ?? null);
+      toast.success(`Found ${res.results.length} probable colleges`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Prediction failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!savedId || !result) return;
+    try {
+      await api.downloadPdf(savedId, result.student_name);
+      toast.success("PDF downloaded");
+    } catch (err: any) {
+      toast.error(err.message ?? "Download failed");
+    }
+  };
+
+  const allSelected = form.degrees.length === DEGREES.length;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold">College Prediction</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Enter your details to find probable colleges from last year&apos;s cutoffs.
+        </p>
+      </div>
+
+      <div className="card p-6">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="label">Student Name</label>
+            <input
+              className="input"
+              placeholder="Full name"
+              value={form.student_name}
+              onChange={(e) => setForm({ ...form, student_name: e.target.value })}
+            />
+          </div>
+
+          {/* Score / AIR radio */}
+          <div className="sm:col-span-2">
+            <label className="label">Predict using</label>
+            <div className="flex gap-6">
+              {(["score", "air"] as const).map((m) => (
+                <label key={m} className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mode"
+                    checked={form.mode === m}
+                    onChange={() => setForm({ ...form, mode: m })}
+                    className="accent-brand-600"
+                  />
+                  {m === "score" ? "NEET Score" : "All-India Rank (AIR)"}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {form.mode === "score" ? (
+            <div>
+              <label className="label">NEET Score (0–720)</label>
+              <input
+                type="number"
+                min={0}
+                max={720}
+                className="input"
+                value={form.score}
+                onChange={(e) => setForm({ ...form, score: e.target.value })}
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="label">All-India Rank</label>
+              <input
+                type="number"
+                min={1}
+                className="input"
+                value={form.air}
+                onChange={(e) => setForm({ ...form, air: e.target.value })}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="label">Gender</label>
+            <select
+              className="input"
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value as "Male" | "Female" })}
+            >
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Category</label>
+            <select
+              className="input"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Degree checkboxes */}
+          <div className="sm:col-span-2">
+            <label className="label">Degrees</label>
+            <div className="flex flex-wrap gap-3">
+              <Checkbox label="All" checked={allSelected} onChange={() => toggleDegree("All")} />
+              {DEGREES.map((d) => (
+                <Checkbox
+                  key={d}
+                  label={d}
+                  checked={form.degrees.includes(d)}
+                  onChange={() => toggleDegree(d)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <button className="btn-primary" onClick={submit} disabled={loading}>
+            {loading ? <Spinner /> : <Sparkles className="h-4 w-4" />} Predict
+          </button>
+          <button className="btn-ghost" onClick={clear} disabled={loading}>
+            <Eraser className="h-4 w-4" /> Clear
+          </button>
+        </div>
+      </div>
+
+      {result && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">
+              Results for {result.student_name}
+            </h2>
+            <button className="btn-primary" onClick={downloadPdf} disabled={!savedId}>
+              <FileDown className="h-4 w-4" /> Download PDF
+            </button>
+          </div>
+          <PredictionTable results={result.results} showCategoryRank={result.show_category_rank} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return (
+    <label
+      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+        checked ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10" : "hover:bg-brand-50/50"
+      }`}
+    >
+      <input type="checkbox" checked={checked} onChange={onChange} className="accent-brand-600" />
+      {label}
+    </label>
+  );
+}
