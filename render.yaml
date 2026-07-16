@@ -1,5 +1,11 @@
-# Render Blueprint — deploys the FastAPI backend using an EXISTING database (neet-db).
+# Render Blueprint — deploys the FastAPI backend + a free PostgreSQL instance.
 # Frontend deploys separately on Vercel (see README).
+databases:
+  - name: medpredict-db
+    plan: free
+    databaseName: medpredict
+    user: medpredict
+
 services:
   - type: web
     name: medpredict-api
@@ -11,13 +17,16 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: medpredict-db
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: ENVIRONMENT
         value: production
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
+      # Set this to your deployed Vercel URL after the frontend is live.
       - key: CORS_ORIGINS
         value: https://your-frontend.vercel.app
       - key: FIRST_ADMIN_EMAIL
