@@ -298,3 +298,15 @@ Notes on the numbers:
   on `prediction_usage`, added automatically on startup for existing databases).
 
 New endpoint: `GET /api/admin/module-stats`.
+
+## Veterinary module (v7)
+
+Fifth predictor: **Veterinary (B.V.Sc & A.H)** — landing-page card + `/veterinary` page.
+- Data: `data/Veterinary_Cutoff.xlsx` (sheet "Round 3 Cutoff", 291 rows, 58 colleges,
+  State column included; 2 rows with "-" cutoffs are skipped automatically).
+- Flow: Name → Marks or Rank → Category (single-select; State optional, default all) → results on screen → PDF.
+- PDF columns: Sr, Institute Name, State, Course, Marks, Rank — sorted by Rank (best first).
+- Per-module approval applies: new users need the admin to tick "Veterinary"
+  (existing databases get the new permission column added automatically on startup;
+  the shared jadav784 account gets it ON). Appears in the Modules dashboards,
+  today's-per-module breakdown, usage chart, and PREDS totals.

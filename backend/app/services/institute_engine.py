@@ -119,6 +119,14 @@ MODULES: Dict[str, ModuleConfig] = {
         col_air="Gen Rank", col_score="Gen Score", col_degree="Degree",
         degrees=["MBBS", "BDS"],
     ),
+    "veterinary": ModuleConfig(
+        key="veterinary", label="Veterinary",
+        filename="Veterinary_Cutoff.xlsx", sheet="Round 3 Cutoff",
+        col_institute="Allotted Institute", col_state="State",
+        col_air="Rank Round 3", col_score="Marks Round 3",
+        col_degree="Course", col_category="Alloted Category",
+        degrees=[],  # single course (B.V.Sc & A.H) -> no degree filter shown
+    ),
 }
 
 
@@ -141,7 +149,7 @@ class _ModuleData:
         df["_air"] = pd.to_numeric(df[cfg.col_air], errors="coerce")
         df["_score"] = pd.to_numeric(df[cfg.col_score], errors="coerce")
         df["_degree"] = (
-            df[cfg.col_degree].astype(str).str.strip().str.upper()
+            df[cfg.col_degree].astype(str).str.strip()
             if cfg.has_degree else ""
         )
         df["_category"] = (
@@ -225,7 +233,7 @@ def predict_institute(
             if any(d.upper() in ("ALL", "BOTH") for d in degrees)
             else [d.upper() for d in degrees]
         )
-        subset = subset[subset["_degree"].isin(wanted)]
+        subset = subset[subset["_degree"].str.upper().isin(wanted)]
 
     # Category filter (multi-select).
     if cfg.has_category and categories:

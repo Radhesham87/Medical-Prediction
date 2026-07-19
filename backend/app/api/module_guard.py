@@ -11,6 +11,7 @@ MODULE_FIELDS = {
     "all-india": "all_india",
     "maharashtra": "maharashtra",
     "deemed": "deemed",
+    "veterinary": "veterinary",
 }
 
 MODULE_LABELS = {
@@ -18,6 +19,7 @@ MODULE_LABELS = {
     "all-india": "All India (15%)",
     "maharashtra": "Maharashtra (85%)",
     "deemed": "Deemed",
+    "veterinary": "Veterinary",
 }
 
 

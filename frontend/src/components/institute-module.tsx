@@ -24,10 +24,24 @@ export function InstituteModule({
   moduleKey,
   title,
   subtitle,
+  scoreLabel = "NEET Score",
+  scoreInputLabel = "NEET Score (0-720)",
+  rankLabel = "All-India Rank (AIR)",
+  rankInputLabel = "All-India Rank",
+  degreeHeader = "Degree",
+  rankHeader = "AIR",
+  scoreHeader = "Score",
 }: {
   moduleKey: ModuleKey;
   title: string;
   subtitle: string;
+  scoreLabel?: string;
+  scoreInputLabel?: string;
+  rankLabel?: string;
+  rankInputLabel?: string;
+  degreeHeader?: string;
+  rankHeader?: string;
+  scoreHeader?: string;
 }) {
   const router = useRouter();
   const [options, setOptions] = useState<InstituteOptions | null>(null);
@@ -160,7 +174,7 @@ export function InstituteModule({
                     onChange={() => setMode(m)}
                     className="accent-brand-600"
                   />
-                  {m === "score" ? "NEET Score" : "All-India Rank (AIR)"}
+                  {m === "score" ? scoreLabel : rankLabel}
                 </label>
               ))}
             </div>
@@ -168,7 +182,7 @@ export function InstituteModule({
 
           {mode === "score" ? (
             <div>
-              <label className="label">NEET Score (0-720)</label>
+              <label className="label">{scoreInputLabel}</label>
               <input
                 type="number"
                 min={0}
@@ -180,7 +194,7 @@ export function InstituteModule({
             </div>
           ) : (
             <div>
-              <label className="label">All-India Rank</label>
+              <label className="label">{rankInputLabel}</label>
               <input
                 type="number"
                 min={1}
@@ -269,11 +283,11 @@ export function InstituteModule({
                 <tr>
                   <th className="px-3 py-2">Sr</th>
                   <th className="px-3 py-2">Institute Name</th>
-                  {result.show_degree && <th className="px-3 py-2">Degree</th>}
+                  {result.show_degree && <th className="px-3 py-2">{degreeHeader}</th>}
                   <th className="px-3 py-2">State</th>
                   {result.show_category && <th className="px-3 py-2">Category</th>}
-                  <th className="px-3 py-2">AIR</th>
-                  <th className="px-3 py-2">Score</th>
+                  <th className="px-3 py-2">{rankHeader}</th>
+                  <th className="px-3 py-2">{scoreHeader}</th>
                   <th className="px-3 py-2">{result.mode === "score" ? "Margin (pts)" : "Margin (rank)"}</th>
                   <th className="px-3 py-2">Chance</th>
                 </tr>

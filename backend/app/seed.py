@@ -97,6 +97,21 @@ def _migrate_add_usage_kind() -> None:
     logger.info("Migrated: added prediction_usage.kind column")
 
 
+def _migrate_add_veterinary_access() -> None:
+    """Add module_access.veterinary on existing databases (idempotent)."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "module_access" not in insp.get_table_names():
+        return
+    cols = {c["name"] for c in insp.get_columns("module_access")}
+    if "veterinary" in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE module_access ADD COLUMN veterinary BOOLEAN DEFAULT FALSE"))
+    logger.info("Migrated: added module_access.veterinary column")
+
+
 def _grant_all_modules(db, user: User) -> None:
     access = db.get(ModuleAccess, user.id)
     if access is None:
@@ -106,6 +121,7 @@ def _grant_all_modules(db, user: User) -> None:
     access.all_india = True
     access.maharashtra = True
     access.deemed = True
+    access.veterinary = True
     db.commit()
 
 
@@ -113,6 +129,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_add_sml()
     _migrate_add_usage_kind()
+    _migrate_add_veterinary_access()
     db = SessionLocal()
     try:
         admin = db.execute(select(User).where(User.role == Role.ADMIN)).scalar_one_or_none()

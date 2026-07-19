@@ -56,12 +56,12 @@ export default function AdminPage() {
 
   const moduleUsage = users.reduce(
     (acc, u) => {
-      for (const k of ["aiims", "all-india", "maharashtra", "deemed"]) {
+      for (const k of ["aiims", "all-india", "maharashtra", "deemed", "veterinary"]) {
         acc[k] = (acc[k] ?? 0) + (u.usage?.[k] ?? 0);
       }
       return acc;
     },
-    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0 } as Record<string, number>
+    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0, veterinary: 0 } as Record<string, number>
   );
 
   return (
@@ -85,12 +85,13 @@ export default function AdminPage() {
           <p className="mb-3 text-sm font-semibold text-slate-500">
             Today&apos;s Predictions by Module
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {[
               { key: "aiims", label: "AIIMS" },
               { key: "all-india", label: "All India (15%)" },
               { key: "maharashtra", label: "Maharashtra (85%)" },
               { key: "deemed", label: "Deemed" },
+              { key: "veterinary", label: "Veterinary" },
             ].map((m) => (
               <div
                 key={m.key}
@@ -115,6 +116,7 @@ export default function AdminPage() {
               { label: "All India (15%)", value: moduleUsage["all-india"], color: "#7c3aed" },
               { label: "Maharashtra", value: moduleUsage["maharashtra"], color: "#0891b2" },
               { label: "Deemed", value: moduleUsage["deemed"], color: "#059669" },
+              { label: "Veterinary", value: moduleUsage["veterinary"], color: "#db2777" },
             ]}
           />
           <Donut
@@ -314,6 +316,7 @@ const MODULE_META: { key: string; label: string }[] = [
   { key: "all-india", label: "All India (15%)" },
   { key: "maharashtra", label: "Maharashtra (85%)" },
   { key: "deemed", label: "Deemed" },
+  { key: "veterinary", label: "Veterinary" },
 ];
 
 function ModulesModal({
@@ -330,6 +333,7 @@ function ModulesModal({
     all_india: !!user.modules?.["all-india"],
     maharashtra: !!user.modules?.["maharashtra"],
     deemed: !!user.modules?.["deemed"],
+    veterinary: !!user.modules?.["veterinary"],
   });
   const [busy, setBusy] = useState(false);
 
@@ -338,6 +342,7 @@ function ModulesModal({
     "all-india": "all_india",
     maharashtra: "maharashtra",
     deemed: "deemed",
+    veterinary: "veterinary",
   };
 
   const save = async () => {

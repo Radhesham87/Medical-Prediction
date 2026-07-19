@@ -27,6 +27,7 @@ MODULE_TITLES = {
     "aiims": "AIIMS",
     "all-india": "All India (15%)",
     "deemed": "Deemed",
+    "veterinary": "Veterinary",
 }
 
 
@@ -76,7 +77,10 @@ def build_institute_pdf(
         Spacer(1, 10),
     ]
 
-    input_label = "NEET Score" if mode == "score" else "AIR"
+    if module == "veterinary":
+        input_label = "Marks" if mode == "score" else "Rank"
+    else:
+        input_label = "NEET Score" if mode == "score" else "AIR"
     input_value = f"{score:g}" if mode == "score" else f"{air:,}"
     meta = [["Student Name", student_name, input_label, input_value]]
     meta_tbl = Table(meta, colWidths=[35 * mm, 70 * mm, 30 * mm, 45 * mm])
@@ -94,6 +98,38 @@ def build_institute_pdf(
     ]))
     story.append(meta_tbl)
     story.append(Spacer(1, 14))
+
+    # Veterinary uses its own fixed layout: Institute, State, Course, Marks, Rank
+    # sorted by Rank (best first), per the requested PDF format.
+    if module == "veterinary":
+        vet_rows = sorted(results, key=lambda r: (r.get("air") is None, r.get("air") or 0))
+        headers = ["Sr", "Institute Name", "State", "Course", "Marks", "Rank"]
+        data = [headers]
+        for i, r in enumerate(vet_rows, start=1):
+            data.append([
+                str(i),
+                Paragraph(str(r["institute_name"]).title(), cell),
+                Paragraph(str(r["state_name"]).title(), cell),
+                Paragraph(str(r.get("degree") or "-"), cell),
+                str(r["score"]),
+                f"{r['air']:,}",
+            ])
+        widths = [9 * mm, 68 * mm, 28 * mm, 30 * mm, 17 * mm, 22 * mm]
+        tbl = Table(data, colWidths=widths, repeatRows=1)
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), PRIMARY),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 7),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, LIGHT]),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        story.append(tbl)
+        doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+        return buf.getvalue()
 
     # Build headers dynamically.
     headers = ["Sr", "Institute Name"]

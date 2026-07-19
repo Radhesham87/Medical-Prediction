@@ -80,7 +80,7 @@ async function downloadPost(path: string, payload: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export type ModuleKey = "aiims" | "all-india" | "deemed";
+export type ModuleKey = "aiims" | "all-india" | "deemed" | "veterinary";
 
 export interface InstituteOptions {
   states: string[];
@@ -225,7 +225,7 @@ export const api = {
     request<void>(`/admin/users/${id}/devices/${sessionId}`, { method: "DELETE" }),
   setUserModules: (
     id: number,
-    modules: { aiims: boolean; all_india: boolean; maharashtra: boolean; deemed: boolean }
+    modules: { aiims: boolean; all_india: boolean; maharashtra: boolean; deemed: boolean; veterinary: boolean }
   ) =>
     request<UserProfile>(`/admin/users/${id}/modules`, {
       method: "PUT",

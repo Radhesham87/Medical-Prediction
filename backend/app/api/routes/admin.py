@@ -42,7 +42,7 @@ def stats(db: Session = Depends(get_db)):
     # AIIMS / All India / Deemed: counted from usage events.
     inst_total: dict[str, int] = {}
     inst_today: dict[str, int] = {}
-    for key in ("aiims", "all-india", "deemed"):
+    for key in ("aiims", "all-india", "deemed", "veterinary"):
         base = db.query(func.count(PredictionUsage.id)).filter(
             PredictionUsage.module == key, PredictionUsage.kind == "predict"
         )
@@ -62,6 +62,7 @@ def stats(db: Session = Depends(get_db)):
         "all-india": inst_today["all-india"],
         "maharashtra": mah_today,
         "deemed": inst_today["deemed"],
+        "veterinary": inst_today["veterinary"],
     }
 
     return AdminStats(
@@ -92,7 +93,7 @@ def _get_user(db: Session, user_id: int) -> User:
     return user
 
 
-_MODULE_KEYS = ["aiims", "all-india", "maharashtra", "deemed"]
+_MODULE_KEYS = ["aiims", "all-india", "maharashtra", "deemed", "veterinary"]
 
 
 def _usage_counts(db: Session, u: User) -> dict:
@@ -119,6 +120,7 @@ def _serialize_user(db: Session, u: User) -> dict:
         "all-india": bool(access and access.all_india),
         "maharashtra": bool(access and access.maharashtra),
         "deemed": bool(access and access.deemed),
+        "veterinary": bool(access and getattr(access, "veterinary", False)),
     }
     usage = _usage_counts(db, u)
     return {
@@ -143,6 +145,7 @@ def set_modules(user_id: int, payload: ModuleAccessIn, db: Session = Depends(get
     access.all_india = payload.all_india
     access.maharashtra = payload.maharashtra
     access.deemed = payload.deemed
+    access.veterinary = payload.veterinary
     db.commit()
     return _serialize_user(db, user)
 
@@ -152,6 +155,7 @@ _ACCESS_FIELD = {
     "all-india": "all_india",
     "maharashtra": "maharashtra",
     "deemed": "deemed",
+    "veterinary": "veterinary",
 }
 
 _MODULE_TITLES = {
@@ -159,6 +163,7 @@ _MODULE_TITLES = {
     "all-india": "All India (15%)",
     "maharashtra": "Maharashtra (85%)",
     "deemed": "Deemed",
+    "veterinary": "Veterinary",
 }
 
 
