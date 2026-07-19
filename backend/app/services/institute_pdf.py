@@ -1,4 +1,10 @@
-"""Generate a professional A4 PDF of a prediction result using reportlab."""
+"""A4 PDF for the AIIMS / All-India / Deemed modules.
+
+Column layout adapts to the module:
+  - AIIMS:      Sr, Institute Name, State Name, AIR, Score
+  - All-India:  Sr, Institute Name, Degree, State Name, AIR, Score
+  - Deemed:     Sr, Institute Name, Degree, State Name, AIR, Score
+"""
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import List, Optional
@@ -7,20 +13,20 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import (
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-PRIMARY = colors.HexColor("#1e3a8a")   # medical blue
+PRIMARY = colors.HexColor("#1e3a8a")
 LIGHT = colors.HexColor("#eff6ff")
 BAND_COLORS = {
     "High": colors.HexColor("#16a34a"),
     "Moderate": colors.HexColor("#d97706"),
     "Low": colors.HexColor("#dc2626"),
+}
+
+MODULE_TITLES = {
+    "aiims": "AIIMS",
+    "all-india": "All India (15%)",
+    "deemed": "Deemed",
 }
 
 
@@ -37,44 +43,43 @@ def _footer(canvas, doc):
     canvas.restoreState()
 
 
-def build_prediction_pdf(
+def build_institute_pdf(
     *,
+    module: str,
     student_name: str,
     mode: str,
     score: Optional[float],
     air: Optional[int],
-    sml: Optional[int] = None,
-    gender: str,
-    category: str,
+    show_degree: bool,
+    show_category: bool,
     results: List[dict],
-    show_category_rank: bool,
 ) -> bytes:
     buf = BytesIO()
+    module_title = MODULE_TITLES.get(module, module.title())
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         leftMargin=15 * mm, rightMargin=15 * mm, topMargin=18 * mm, bottomMargin=20 * mm,
-        title=f"NEET Prediction - {student_name}",
+        title=f"{module_title} Prediction - {student_name}",
     )
     styles = getSampleStyleSheet()
     title = ParagraphStyle("t", parent=styles["Title"], textColor=PRIMARY, fontSize=18)
     sub = ParagraphStyle("s", parent=styles["Normal"], fontSize=9, textColor=colors.grey)
+    cell = ParagraphStyle("c", fontSize=7, leading=8)
 
-    story = [Paragraph("NEET Medical College Prediction Report", title), Spacer(1, 4)]
-    story.append(Paragraph(
-        f"Generated on {datetime.now(timezone.utc).astimezone().strftime('%d %b %Y, %H:%M')}", sub))
-    story.append(Spacer(1, 10))
-
-    if mode == "score":
-        input_value = f"NEET Score: {score:g}"
-    elif mode == "sml":
-        input_value = f"SML: {sml:,}"
-    else:
-        input_value = f"AIR: {air:,}"
-    meta = [
-        ["Student Name", student_name, "Gender", gender],
-        [input_value.split(":")[0], input_value.split(": ")[1], "Category", category],
+    story = [
+        Paragraph(f"{module_title} Medical College Prediction", title),
+        Spacer(1, 4),
+        Paragraph(
+            f"Generated on {datetime.now(timezone.utc).astimezone().strftime('%d %b %Y, %H:%M')}",
+            sub,
+        ),
+        Spacer(1, 10),
     ]
-    meta_tbl = Table(meta, colWidths=[35 * mm, 55 * mm, 30 * mm, 45 * mm])
+
+    input_label = "NEET Score" if mode == "score" else "AIR"
+    input_value = f"{score:g}" if mode == "score" else f"{air:,}"
+    meta = [["Student Name", student_name, input_label, input_value]]
+    meta_tbl = Table(meta, colWidths=[35 * mm, 70 * mm, 30 * mm, 45 * mm])
     meta_tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (0, -1), LIGHT),
         ("BACKGROUND", (2, 0), (2, -1), LIGHT),
@@ -83,7 +88,6 @@ def build_prediction_pdf(
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
         ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.white),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
@@ -91,34 +95,36 @@ def build_prediction_pdf(
     story.append(meta_tbl)
     story.append(Spacer(1, 14))
 
-    headers = ["Sr", "Code", "College Name", "Status", "Degree", "Score", "SML", "AIR"]
-    if show_category_rank:
-        headers.append("Cat Rank")
-    headers.append("Chance")
+    # Build headers dynamically.
+    headers = ["Sr", "Institute Name"]
+    if show_degree:
+        headers.append("Degree")
+    headers.append("State Name")
+    if show_category:
+        headers.append("Category")
+    headers += ["AIR", "Score", "Chance"]
 
     data = [headers]
     for r in results:
-        row = [
-            str(r["sr_no"]),
-            r["college_code"],
-            Paragraph(r["college_name"].title(), ParagraphStyle("c", fontSize=7, leading=8)),
-            r["status"],
-            r["degree"],
-            f"{r['neet_score']:g}" if r.get("neet_score") is not None else "-",
-            f"{r['neet_sml']:g}" if r.get("neet_sml") is not None else "-",
-            f"{r['air']:,}" if r.get("air") is not None else "-",
-        ]
-        if show_category_rank:
-            row.append(r.get("category_rank") or "-")
-        row.append(r["chance"])
+        row = [str(r["sr_no"]), Paragraph(str(r["institute_name"]).title(), cell)]
+        if show_degree:
+            row.append(r.get("degree") or "-")
+        row.append(str(r["state_name"]).title())
+        if show_category:
+            row.append(r.get("category") or "-")
+        row += [f"{r['air']:,}", str(r["score"]), r["chance"]]
         data.append(row)
 
-    col_widths = [8 * mm, 14 * mm, 52 * mm, 18 * mm, 14 * mm, 13 * mm, 13 * mm, 16 * mm]
-    if show_category_rank:
-        col_widths.append(15 * mm)
-    col_widths.append(16 * mm)
+    # Column widths.
+    widths = [8 * mm, 62 * mm]
+    if show_degree:
+        widths.append(16 * mm)
+    widths.append(34 * mm)
+    if show_category:
+        widths.append(20 * mm)
+    widths += [20 * mm, 14 * mm, 16 * mm]
 
-    tbl = Table(data, colWidths=col_widths, repeatRows=1)
+    tbl = Table(data, colWidths=widths, repeatRows=1)
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), PRIMARY),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),

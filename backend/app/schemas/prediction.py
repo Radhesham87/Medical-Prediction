@@ -14,9 +14,10 @@ Degree = Literal["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"]
 
 class PredictionRequest(BaseModel):
     student_name: str = Field(min_length=1, max_length=150)
-    mode: Literal["score", "air"]
+    mode: Literal["score", "air", "sml"]
     score: Optional[float] = Field(default=None, ge=0, le=720)
     air: Optional[int] = Field(default=None, ge=1)
+    sml: Optional[int] = Field(default=None, ge=1)
     degrees: List[str] = Field(min_length=1)  # "All" allowed; expanded server-side
     gender: Gender
     category: Category
@@ -27,6 +28,8 @@ class PredictionRequest(BaseModel):
             raise ValueError("score is required when mode is 'score'")
         if self.mode == "air" and self.air is None:
             raise ValueError("air is required when mode is 'air'")
+        if self.mode == "sml" and self.sml is None:
+            raise ValueError("sml is required when mode is 'sml'")
         return self
 
 
@@ -48,6 +51,7 @@ class PredictionResponse(BaseModel):
     mode: str
     score: Optional[float]
     air: Optional[int]
+    sml: Optional[int] = None
     gender: str
     category: str
     show_category_rank: bool
@@ -61,6 +65,7 @@ class PredictionHistoryOut(BaseModel):
     mode: str
     score: Optional[float]
     air: Optional[int]
+    sml: Optional[int] = None
     gender: str
     category: str
     degrees: List[str]

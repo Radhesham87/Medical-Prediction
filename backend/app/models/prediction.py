@@ -19,9 +19,10 @@ class Prediction(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
     student_name: Mapped[str] = mapped_column(String(150))
-    mode: Mapped[str] = mapped_column(String(10))  # "score" | "air"
+    mode: Mapped[str] = mapped_column(String(10))  # "score" | "air" | "sml"
     score: Mapped[float | None] = mapped_column(nullable=True)
     air: Mapped[int | None] = mapped_column(nullable=True)
+    sml: Mapped[int | None] = mapped_column(nullable=True)
     gender: Mapped[str] = mapped_column(String(10))
     category: Mapped[str] = mapped_column(String(20))
     degrees: Mapped[str] = mapped_column(Text)  # JSON list

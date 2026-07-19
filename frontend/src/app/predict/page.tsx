@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eraser, Sparkles, FileDown } from "lucide-react";
+import { Eraser, Sparkles, FileDown, Lock } from "lucide-react";
 import { api, type PredictPayload } from "@/lib/api";
 import { getRole, isAuthenticated } from "@/lib/auth";
 import { Spinner } from "@/components/loading";
@@ -12,9 +12,10 @@ import { CATEGORIES, DEGREES, type PredictionResponse } from "@/types";
 
 const EMPTY = {
   student_name: "",
-  mode: "score" as "score" | "air",
+  mode: "score" as "score" | "air" | "sml",
   score: "",
   air: "",
+  sml: "",
   degrees: [] as string[],
   gender: "Male" as "Male" | "Female",
   category: "OPEN",
@@ -26,6 +27,7 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
+  const [denied, setDenied] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) router.replace("/login");
@@ -54,6 +56,7 @@ export default function PredictPage() {
     if (form.degrees.length === 0) return toast.error("Select at least one degree");
     if (form.mode === "score" && !form.score) return toast.error("Enter a NEET score");
     if (form.mode === "air" && !form.air) return toast.error("Enter an AIR");
+    if (form.mode === "sml" && !form.sml) return toast.error("Enter an SML rank");
 
     const payload: PredictPayload = {
       student_name: form.student_name.trim(),
@@ -61,7 +64,11 @@ export default function PredictPage() {
       degrees: form.degrees,
       gender: form.gender,
       category: form.category,
-      ...(form.mode === "score" ? { score: Number(form.score) } : { air: Number(form.air) }),
+      ...(form.mode === "score"
+        ? { score: Number(form.score) }
+        : form.mode === "air"
+          ? { air: Number(form.air) }
+          : { sml: Number(form.sml) }),
     };
 
     setLoading(true);
@@ -72,6 +79,7 @@ export default function PredictPage() {
       setSavedId(history[0]?.id ?? null);
       toast.success(`Found ${res.results.length} probable colleges`);
     } catch (err: any) {
+      if (err?.status === 403) setDenied(true);
       toast.error(err.message ?? "Prediction failed");
     } finally {
       setLoading(false);
@@ -90,10 +98,25 @@ export default function PredictPage() {
 
   const allSelected = form.degrees.length === DEGREES.length;
 
+  if (denied) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <div className="card flex flex-col items-center p-10 text-center">
+          <Lock className="h-12 w-12 text-brand-600" />
+          <h1 className="mt-4 text-2xl font-bold">Maharashtra (85%) Prediction</h1>
+          <p className="mt-3 text-slate-500">
+            Your account is <strong>waiting for admin approval</strong> to use this module.
+            Please contact the administrator to be granted access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">College Prediction</h1>
+        <h1 className="text-2xl font-bold">Maharashtra (85%) Prediction</h1>
         <p className="mt-1 text-sm text-slate-500">
           Enter your details to find probable colleges from last year&apos;s cutoffs.
         </p>
@@ -114,8 +137,8 @@ export default function PredictPage() {
           {/* Score / AIR radio */}
           <div className="sm:col-span-2">
             <label className="label">Predict using</label>
-            <div className="flex gap-6">
-              {(["score", "air"] as const).map((m) => (
+            <div className="flex flex-wrap gap-6">
+              {(["score", "sml", "air"] as const).map((m) => (
                 <label key={m} className="flex cursor-pointer items-center gap-2">
                   <input
                     type="radio"
@@ -124,7 +147,7 @@ export default function PredictPage() {
                     onChange={() => setForm({ ...form, mode: m })}
                     className="accent-brand-600"
                   />
-                  {m === "score" ? "NEET Score" : "All-India Rank (AIR)"}
+                  {m === "score" ? "NEET Score" : m === "sml" ? "SML" : "All-India Rank (AIR)"}
                 </label>
               ))}
             </div>
@@ -132,7 +155,7 @@ export default function PredictPage() {
 
           {form.mode === "score" ? (
             <div>
-              <label className="label">NEET Score (0–720)</label>
+              <label className="label">NEET Score (0-720)</label>
               <input
                 type="number"
                 min={0}
@@ -140,6 +163,17 @@ export default function PredictPage() {
                 className="input"
                 value={form.score}
                 onChange={(e) => setForm({ ...form, score: e.target.value })}
+              />
+            </div>
+          ) : form.mode === "sml" ? (
+            <div>
+              <label className="label">State Merit List (SML) Rank</label>
+              <input
+                type="number"
+                min={1}
+                className="input"
+                value={form.sml}
+                onChange={(e) => setForm({ ...form, sml: e.target.value })}
               />
             </div>
           ) : (
@@ -217,7 +251,14 @@ export default function PredictPage() {
               <FileDown className="h-4 w-4" /> Download PDF
             </button>
           </div>
-          <PredictionTable results={result.results} showCategoryRank={result.show_category_rank} />
+          <PredictionTable
+            results={result.results}
+            showCategoryRank={result.show_category_rank}
+            mode={result.mode}
+            score={result.score}
+            air={result.air}
+            sml={result.sml}
+          />
         </div>
       )}
     </div>

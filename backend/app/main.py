@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from app.api.routes import admin, auth, dataset, history, predict, users
+from app.api.routes import admin, auth, dataset, history, institute, predict, users
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.seed import init_db
@@ -78,5 +78,5 @@ def health():
     return {"status": "healthy"}
 
 
-for r in (auth, users, admin, predict, history, dataset):
+for r in (auth, users, admin, predict, history, dataset, institute):
     app.include_router(r.router, prefix=settings.API_PREFIX)

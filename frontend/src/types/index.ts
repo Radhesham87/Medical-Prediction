@@ -22,9 +22,34 @@ export interface UserProfile {
   registration_date: string;
   last_login: string | null;
   prediction_count: number;
+  active_device_count: number;
+  modules: Record<string, boolean>;
+  usage: Record<string, number>;
+}
+
+export interface ModuleStats {
+  key: string;
+  label: string;
+  users_with_access: number;
+  unique_users: number;
+  predictions: number;
+  todays_predictions: number;
+  downloads: number;
+}
+
+export interface Device {
+  id: number;
+  device_label: string;
+  browser: string;
+  os: string;
+  ip: string;
+  is_active: boolean;
+  created_at: string;
+  last_seen_at: string;
 }
 
 export interface AdminStats {
+  todays_by_module: Record<string, number>;
   total_users: number;
   pending_users: number;
   approved_users: number;
@@ -49,9 +74,10 @@ export interface CollegeResult {
 
 export interface PredictionResponse {
   student_name: string;
-  mode: "score" | "air";
+  mode: "score" | "air" | "sml";
   score: number | null;
   air: number | null;
+  sml: number | null;
   gender: string;
   category: string;
   show_category_rank: boolean;

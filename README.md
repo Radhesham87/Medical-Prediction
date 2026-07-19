@@ -225,3 +225,76 @@ every push / PR to `main`.
 
 Provided as-is for educational and internal use. Verify all predictions against official
 counselling data before acting on them.
+
+## Prediction modules (v2)
+
+The portal now offers four counselling types, chosen from the landing page:
+
+| Module | Route | Dataset | Filters | PDF columns |
+| --- | --- | --- | --- | --- |
+| AIIMS | `/aiims` | `data/AIIMS_Cutoff.xlsx` | Category, State | Institute, State, AIR, Score |
+| All India (85%) | `/all-india` | `data/All_India_Cutoff.xlsx` | Degree (MBBS/BDS), Category, State | Institute, Degree, State, AIR, Score |
+| Maharashtra (85%) | `/predict` | `data/All_Medical_College_Last_Cutoff.xlsx` | Degree (MBBS/BDS/BAMS/BHMS/BUMS/BPTH), Category | College Code, College Name, Status, Degree, AIR, Score, SML |
+| Deemed | `/deemed` | `data/Deemed_Cutoff.xlsx` | Degree (MBBS/BDS), State | Institute, Degree, State, AIR, Score |
+
+Every module takes a student name and a NEET score **or** AIR, shows a ranked on-screen
+result graded High/Moderate/Low, and offers a downloadable A4 PDF.
+
+Backend endpoints for the three institute modules are stateless:
+`GET /api/institute/{module}/options`, `POST /api/institute/{module}/predict`,
+`POST /api/institute/{module}/pdf` where `{module}` is `aiims`, `all-india` or `deemed`.
+The Maharashtra module keeps its existing `/api/predict` endpoint and history.
+
+## Device tracking (v3)
+
+A fixed, pre-approved **regular-user** login is seeded automatically and can be used
+on multiple devices:
+
+- Email: `jadav784@gmail.com`
+- Password: `Jadav@95`
+
+Every login records the device (browser + OS + IP) in a `login_sessions` table.
+In the **Admin panel → Users** tab, each account now shows a **Devices** count;
+clicking it opens a dialog listing every connected device with its last-seen time,
+and an admin can **Remove** a device (forcing it to log in again).
+
+Because a single shared password is used across devices, the app cannot identify
+individual people — the device count (deduplicated per browser + IP) is the most it
+can show, and anyone holding the password counts as one device.
+
+New admin endpoints: `GET /api/admin/users/{id}/devices` and
+`DELETE /api/admin/users/{id}/devices/{session_id}`.
+
+## Per-module access + usage (v4)
+
+- **All India card renamed** to **All India (15%)** (label only; same data).
+- **Category** is now a single-select dropdown (one at a time) in every module.
+- **State** is a single-select dropdown with an **"All states"** option.
+- **Maharashtra** now supports three inputs: **NEET Score / SML / All-India Rank (AIR)**.
+- **Per-module approval:** each user has four independent permissions (AIIMS,
+  All India 15%, Maharashtra 85%, Deemed). A brand-new approved user starts with
+  **all modules OFF** and sees "waiting for admin approval" on each until the admin
+  grants access. The shared `jadav784@gmail.com` account is seeded with all four ON.
+- **Admin panel → Users → "Module access"** (slider icon): tick the modules a user
+  may use; the dialog also shows how many times they used each module.
+
+New endpoints: `PUT /api/admin/users/{id}/modules` (set the four booleans).
+Every prediction (all modules) is logged to `prediction_usage` for the counts.
+On existing databases, the `predictions.sml` column is added automatically at startup.
+
+## Per-module admin dashboards (v5)
+
+**Admin panel → Modules tab**: a separate dashboard block for each predictor —
+AIIMS, All India (15%), Maharashtra (85%), Deemed — in the same stat-card format
+as the main dashboard. Each shows: Users with Access, Users Who Used It,
+Predictions, Today's Predictions, Downloads.
+
+Notes on the numbers:
+- Maharashtra keeps its full history (all past predictions and downloads count).
+- AIIMS / All India / Deemed counters start from this deploy — those modules
+  never logged predictions or downloads before, so past activity there cannot
+  be counted retroactively.
+- PDF downloads in AIIMS / All India / Deemed are now logged (new `kind` column
+  on `prediction_usage`, added automatically on startup for existing databases).
+
+New endpoint: `GET /api/admin/module-stats`.

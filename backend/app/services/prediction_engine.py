@@ -138,6 +138,7 @@ def predict(
     mode: str,
     score: Optional[float],
     air: Optional[int],
+    sml: Optional[int] = None,
     degrees: List[str],
     gender: str,
     category: str,
@@ -160,8 +161,13 @@ def predict(
     for _, r in subset.iterrows():
         cutoff_score = r["NEET Score"]
         cutoff_air = r["AIR"]
+        cutoff_sml = r["SML"]
         if mode == "score":
             band = _band_by_score(float(score), float(cutoff_score))
+        elif mode == "sml":
+            if pd.isna(cutoff_sml) or cutoff_sml <= 0:
+                continue
+            band = _band_by_air(float(sml), float(cutoff_sml))  # lower SML is better, like AIR
         else:
             band = _band_by_air(float(air), float(cutoff_air))
         if band is None:

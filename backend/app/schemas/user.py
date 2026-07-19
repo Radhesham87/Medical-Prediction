@@ -51,6 +51,39 @@ class UserOut(BaseModel):
     registration_date: datetime
     last_login: Optional[datetime] = None
     prediction_count: int = 0
+    active_device_count: int = 0
+    modules: dict = {}
+    usage: dict = {}
+
+
+class ModuleStatsOut(BaseModel):
+    key: str
+    label: str
+    users_with_access: int
+    unique_users: int
+    predictions: int
+    todays_predictions: int
+    downloads: int
+
+
+class ModuleAccessIn(BaseModel):
+    aiims: bool = False
+    all_india: bool = False
+    maharashtra: bool = False
+    deemed: bool = False
+
+
+class DeviceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    device_label: str
+    browser: str
+    os: str
+    ip: str
+    is_active: bool
+    created_at: datetime
+    last_seen_at: datetime
 
 
 class PasswordReset(BaseModel):
@@ -58,6 +91,7 @@ class PasswordReset(BaseModel):
 
 
 class AdminStats(BaseModel):
+    todays_by_module: dict = {}
     total_users: int
     pending_users: int
     approved_users: int

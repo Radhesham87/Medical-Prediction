@@ -44,6 +44,17 @@ class User(Base):
     last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("LoginSession", back_populates="user", cascade="all, delete-orphan")
+    module_access = relationship(
+        "ModuleAccess", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    usage_events = relationship(
+        "PredictionUsage", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    @property
+    def active_device_count(self) -> int:
+        return sum(1 for s in self.sessions if s.is_active)
 
     @property
     def prediction_count(self) -> int:

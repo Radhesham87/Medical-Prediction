@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_approved_user
+from app.api.module_guard import ensure_module_allowed, log_usage
 from app.db.session import get_db
 from app.models.prediction import Prediction
 from app.models.user import User
@@ -22,10 +23,13 @@ def make_prediction(
     db: Session = Depends(get_db),
     user: User = Depends(get_approved_user),
 ):
+    ensure_module_allowed(db, user, "maharashtra")
+    log_usage(db, user, "maharashtra")
     results = run_engine(
         mode=payload.mode,
         score=payload.score,
         air=payload.air,
+        sml=payload.sml,
         degrees=payload.degrees,
         gender=payload.gender,
         category=payload.category,
@@ -38,6 +42,7 @@ def make_prediction(
         mode=payload.mode,
         score=payload.score,
         air=payload.air,
+        sml=payload.sml,
         gender=payload.gender,
         category=payload.category,
         degrees=json.dumps(payload.degrees),
@@ -52,6 +57,7 @@ def make_prediction(
         mode=payload.mode,
         score=payload.score,
         air=payload.air,
+        sml=payload.sml,
         gender=payload.gender,
         category=payload.category,
         show_category_rank=show_rank,
@@ -75,6 +81,7 @@ def download_pdf(
         mode=record.mode,
         score=record.score,
         air=record.air,
+        sml=record.sml,
         gender=record.gender,
         category=record.category,
         results=record.results,

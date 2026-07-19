@@ -39,8 +39,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {authed && role === "user" && (
             <>
-              <Link href="/predict" className="btn-ghost">Predict</Link>
-              <Link href="/history" className="btn-ghost">History</Link>
+              <Link href="/" className="btn-ghost">Predict</Link>
             </>
           )}
           {authed && role === "admin" && (

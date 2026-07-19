@@ -8,7 +8,7 @@ from app.models.prediction import Prediction
 from app.models.user import User
 
 
-def registered_users_xlsx(users: List[User]) -> bytes:
+def registered_users_xlsx(users: List[User], totals: dict[int, int] | None = None) -> bytes:
     rows = [
         {
             "User ID": u.id,
@@ -21,7 +21,7 @@ def registered_users_xlsx(users: List[User]) -> bytes:
             "Registration Date": u.registration_date.strftime("%Y-%m-%d %H:%M") if u.registration_date else "",
             "Approval Status": u.status.value if hasattr(u.status, "value") else str(u.status),
             "Last Login": u.last_login.strftime("%Y-%m-%d %H:%M") if u.last_login else "",
-            "Prediction Count": u.prediction_count,
+            "Prediction Count": (totals or {}).get(u.id, u.prediction_count),
         }
         for u in users
     ]

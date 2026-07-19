@@ -60,6 +60,67 @@ async function download(path: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadPost(path: string, payload: unknown, filename: string) {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new ApiError(`Download failed (${res.status})`, res.status);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export type ModuleKey = "aiims" | "all-india" | "deemed";
+
+export interface InstituteOptions {
+  states: string[];
+  categories: string[];
+  degrees: string[];
+}
+
+export interface InstitutePredictPayload {
+  student_name: string;
+  mode: "score" | "air";
+  score?: number;
+  air?: number;
+  degrees?: string[];
+  categories?: string[];
+  states?: string[];
+}
+
+export interface InstituteResultRow {
+  sr_no: number;
+  institute_name: string;
+  state_name: string;
+  degree: string | null;
+  category: string | null;
+  air: number;
+  score: number;
+  chance: "High" | "Moderate" | "Low";
+}
+
+export interface InstitutePredictResult {
+  module: string;
+  student_name: string;
+  mode: "score" | "air";
+  score: number | null;
+  air: number | null;
+  generated_at: string;
+  show_degree: boolean;
+  show_category: boolean;
+  results: InstituteResultRow[];
+}
+
 export interface RegisterPayload {
   name: string;
   email: string;
@@ -73,9 +134,10 @@ export interface RegisterPayload {
 
 export interface PredictPayload {
   student_name: string;
-  mode: "score" | "air";
+  mode: "score" | "air" | "sml";
   score?: number;
   air?: number;
+  sml?: number;
   degrees: string[];
   gender: "Male" | "Female";
   category: string;
@@ -117,6 +179,30 @@ export const api = {
   downloadPdf: (id: number, student: string) =>
     download(`/predict/${id}/pdf`, `NEET_Prediction_${student.replace(/\s+/g, "_")}_${id}.pdf`),
 
+  // ---- Institute modules (AIIMS / All-India / Deemed) ----
+  instituteOptions: (module: ModuleKey) =>
+    request<InstituteOptions>(`/institute/${module}/options`),
+  institutePredict: (module: ModuleKey, payload: InstitutePredictPayload) =>
+    request<InstitutePredictResult>(`/institute/${module}/predict`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  institutePdf: (module: ModuleKey, result: InstitutePredictResult) =>
+    downloadPost(
+      `/institute/${module}/pdf`,
+      {
+        module,
+        student_name: result.student_name,
+        mode: result.mode,
+        score: result.score,
+        air: result.air,
+        show_degree: result.show_degree,
+        show_category: result.show_category,
+        results: result.results,
+      },
+      `${module}_prediction_${result.student_name.replace(/\s+/g, "_")}.pdf`
+    ),
+
   // ---- Admin ----
   adminStats: () => request<AdminStats>("/admin/stats"),
   adminUsers: (status?: string) =>
@@ -133,6 +219,18 @@ export const api = {
     }),
   exportUsers: () => download("/admin/export/users.xlsx", "Registered_Users.xlsx"),
   exportPredictions: () => download("/admin/export/predictions.xlsx", "Predictions.xlsx"),
+  adminModuleStats: () => request<import("@/types").ModuleStats[]>("/admin/module-stats"),
+  adminUserDevices: (id: number) => request<import("@/types").Device[]>(`/admin/users/${id}/devices`),
+  revokeDevice: (id: number, sessionId: number) =>
+    request<void>(`/admin/users/${id}/devices/${sessionId}`, { method: "DELETE" }),
+  setUserModules: (
+    id: number,
+    modules: { aiims: boolean; all_india: boolean; maharashtra: boolean; deemed: boolean }
+  ) =>
+    request<UserProfile>(`/admin/users/${id}/modules`, {
+      method: "PUT",
+      body: JSON.stringify(modules),
+    }),
   adminHistory: (search?: string, sort: "asc" | "desc" = "desc") =>
     request<HistoryItem[]>(
       `/admin/history?sort=${sort}${search ? `&search=${encodeURIComponent(search)}` : ""}`
