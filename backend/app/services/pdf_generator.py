@@ -7,7 +7,9 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.lib.enums import TA_RIGHT
 from reportlab.platypus import (
+    HRFlowable,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -48,7 +50,20 @@ def build_prediction_pdf(
     category: str,
     results: List[dict],
     show_category_rank: bool,
+    brand_headline: Optional[str] = None,
 ) -> bytes:
+    if brand_headline:
+        return _build_branded_pdf(
+            brand=brand_headline,
+            student_name=student_name,
+            mode=mode,
+            score=score,
+            air=air,
+            sml=sml,
+            gender=gender,
+            category=category,
+            results=results,
+        )
     buf = BytesIO()
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
@@ -138,4 +153,198 @@ def build_prediction_pdf(
     story.append(tbl)
 
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    return buf.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Branded report layout (used for accounts listed in app.core.branding).
+# Mirrors the counselling-report style: brand headline, student card,
+# analysis summary, and a clean line-separated college table.
+# ---------------------------------------------------------------------------
+NAVY = colors.HexColor("#0f172a")
+BLUE = colors.HexColor("#2563eb")
+GREY = colors.HexColor("#64748b")
+LINE = colors.HexColor("#e2e8f0")
+CARD = colors.HexColor("#f8fafc")
+
+
+def _build_branded_pdf(
+    *,
+    brand: str,
+    student_name: str,
+    mode: str,
+    score: Optional[float],
+    air: Optional[int],
+    sml: Optional[int],
+    gender: str,
+    category: str,
+    results: List[dict],
+) -> bytes:
+    buf = BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=14 * mm, rightMargin=14 * mm, topMargin=14 * mm, bottomMargin=20 * mm,
+        title=f"{brand} - NEET Prediction - {student_name}",
+    )
+
+    lbl = ParagraphStyle("lbl", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY, leading=9)
+    val = ParagraphStyle("val", fontName="Helvetica-Bold", fontSize=11, textColor=NAVY, leading=14)
+    brand_style = ParagraphStyle("brand", fontName="Helvetica-Bold", fontSize=15, textColor=NAVY, leading=18)
+    rpt = ParagraphStyle("rpt", fontName="Helvetica-Bold", fontSize=8.5, textColor=BLUE, alignment=TA_RIGHT)
+    rdate = ParagraphStyle("rdate", fontName="Helvetica", fontSize=8, textColor=GREY, alignment=TA_RIGHT, leading=11)
+    sect = ParagraphStyle("sect", fontName="Helvetica-Bold", fontSize=7.5, textColor=GREY, leading=10)
+    cname = ParagraphStyle("cname", fontName="Helvetica-Bold", fontSize=8.5, textColor=NAVY, leading=10)
+    csub = ParagraphStyle("csub", fontName="Helvetica", fontSize=6.5, textColor=GREY, leading=8)
+    cell = ParagraphStyle("cell", fontName="Helvetica", fontSize=8, textColor=NAVY, leading=10)
+    cellsub = ParagraphStyle("cellsub", fontName="Helvetica", fontSize=6.5, textColor=GREY, leading=8)
+
+    now = datetime.now(timezone.utc).astimezone().strftime("%d %b %Y, %I:%M %p")
+
+    # ------- header -------
+    head = Table(
+        [[Paragraph(brand, brand_style),
+          [Paragraph("NEET PREDICTION REPORT", rpt), Paragraph(now, rdate)]]],
+        colWidths=[115 * mm, 67 * mm],
+    )
+    head.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story = [head, Spacer(1, 5), HRFlowable(width="100%", thickness=2, color=BLUE), Spacer(1, 10)]
+
+    # ------- student card (Name / Degree / input / Category+Gender) -------
+    if mode == "score":
+        in_label, in_value = "NEET SCORE", f"{score:g}"
+    elif mode == "sml":
+        in_label, in_value = "SML RANK", f"{int(sml):,}"
+    else:
+        in_label, in_value = "ALL INDIA RANK (AIR)", f"{int(air):,}"
+
+    degrees_seen: List[str] = []
+    for r in results:
+        d = r.get("degree")
+        if d and d not in degrees_seen:
+            degrees_seen.append(d)
+    stream_txt = "State Quota (Maharashtra 85%)" + (" · " + ", ".join(degrees_seen) if degrees_seen else "")
+
+    card = Table(
+        [
+            [
+                [Paragraph("STUDENT NAME", lbl), Paragraph(student_name, val)],
+                [Paragraph("STREAM / DEGREE", lbl), Paragraph(stream_txt, val)],
+                [Paragraph(in_label, lbl), Paragraph(in_value, val)],
+            ],
+            [
+                [Paragraph("RESERVED CATEGORY", lbl), Paragraph(f"{category} ({gender})", val)],
+                "",
+                "",
+            ],
+        ],
+        colWidths=[60 * mm, 72 * mm, 50 * mm],
+    )
+    card.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), CARD),
+        ("BOX", (0, 0), (-1, -1), 0.75, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+        ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
+        ("TOPPADDING", (0, 1), (-1, 1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 9),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+    ]))
+    story += [card, Spacer(1, 12)]
+
+    # ------- analysis summary -------
+    story += [Paragraph("PREDICTION ANALYSIS SUMMARY", sect), Spacer(1, 5)]
+    counts = {"High": 0, "Moderate": 0, "Low": 0}
+    for r in results:
+        if r.get("chance") in counts:
+            counts[r["chance"]] += 1
+    big = lambda v, c: ParagraphStyle("b", fontName="Helvetica-Bold", fontSize=14, textColor=c, leading=16)
+    small = ParagraphStyle("sm", fontName="Helvetica", fontSize=7, textColor=GREY, leading=9)
+    boxes = [
+        [Paragraph(str(counts["High"]), big(counts["High"], BAND_COLORS["High"])), Paragraph("High Chance", small)],
+        [Paragraph(str(counts["Moderate"]), big(counts["Moderate"], BAND_COLORS["Moderate"])), Paragraph("Moderate Chance", small)],
+        [Paragraph(str(counts["Low"]), big(counts["Low"], BAND_COLORS["Low"])), Paragraph("Low Chance", small)],
+        [Paragraph(str(len(results)), big(len(results), BLUE)), Paragraph("Total Colleges", small)],
+    ]
+    summ = Table([boxes], colWidths=[45.5 * mm] * 4)
+    summ.setStyle(TableStyle([
+        ("BOX", (0, 0), (0, 0), 0.75, LINE),
+        ("BOX", (1, 0), (1, 0), 0.75, LINE),
+        ("BOX", (2, 0), (2, 0), 0.75, LINE),
+        ("BOX", (3, 0), (3, 0), 0.75, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 9),
+    ]))
+    story += [summ, Spacer(1, 14)]
+
+    # ------- college table -------
+    if mode == "score":
+        cutoff_of = lambda r: r.get("neet_score")
+        cutoff_fmt = lambda v: f"{v:g}" if v is not None else "-"
+        mode_tag, your_value = "SCORE", f"{score:g}"
+        sort_key = lambda r: (cutoff_of(r) is None, -(cutoff_of(r) or 0))
+    elif mode == "sml":
+        cutoff_of = lambda r: r.get("neet_sml")
+        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "-"
+        mode_tag, your_value = "SML", f"{int(sml):,}"
+        sort_key = lambda r: (cutoff_of(r) is None, cutoff_of(r) or 0)
+    else:
+        cutoff_of = lambda r: r.get("air")
+        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "-"
+        mode_tag, your_value = "AIR", f"{int(air):,}"
+        sort_key = lambda r: (cutoff_of(r) is None, cutoff_of(r) or 0)
+
+    ordered = sorted(results, key=sort_key)
+
+    hdr = ParagraphStyle("hdr", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY)
+    hdr_r = ParagraphStyle("hdrr", parent=hdr)
+    your_style = ParagraphStyle("your", fontName="Helvetica-Bold", fontSize=8.5, textColor=NAVY)
+    data = [[
+        Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
+        Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r), Paragraph("CHANCE", hdr),
+    ]]
+    row_styles = []
+    for i, r in enumerate(ordered, start=1):
+        band = r.get("chance", "")
+        data.append([
+            [Paragraph(str(r.get("college_name", "")).title(), cname),
+             Paragraph(f"{r.get('college_code','')} · {r.get('status','')} · Maharashtra", csub)],
+            [Paragraph(str(category), cell), Paragraph(mode_tag, cellsub)],
+            Paragraph(cutoff_fmt(cutoff_of(r)), cell),
+            Paragraph(your_value, your_style),
+            Paragraph(band, ParagraphStyle(
+                "bnd", fontName="Helvetica-Bold", fontSize=8,
+                textColor=BAND_COLORS.get(band, NAVY))),
+        ])
+        row_styles.append(("LINEBELOW", (0, i), (-1, i), 0.5, LINE))
+
+    tbl = Table(data, colWidths=[86 * mm, 26 * mm, 24 * mm, 24 * mm, 22 * mm], repeatRows=1)
+    tbl.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (-1, 0), 0.9, colors.HexColor("#cbd5e1")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 1), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 5),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        *row_styles,
+    ]))
+    story.append(tbl)
+
+    def _pg(canvas, d):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(GREY)
+        canvas.drawString(14 * mm, 10 * mm, f"Generated via {brand} \u2022 Smart Predictor Engine")
+        canvas.drawRightString(A4[0] - 14 * mm, 10 * mm, f"Report Page {d.page}")
+        canvas.setStrokeColor(LINE)
+        canvas.line(14 * mm, 13 * mm, A4[0] - 14 * mm, 13 * mm)
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_pg, onLaterPages=_pg)
     return buf.getvalue()

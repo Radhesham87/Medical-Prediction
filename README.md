@@ -310,3 +310,21 @@ Fifth predictor: **Veterinary (B.V.Sc & A.H)** — landing-page card + `/veterin
   (existing databases get the new permission column added automatically on startup;
   the shared jadav784 account gets it ON). Appears in the Modules dashboards,
   today's-per-module breakdown, usage chart, and PREDS totals.
+
+## Branded PDF account (v8)
+
+A fixed counselling account is seeded whose PDF downloads carry their own branding:
+
+- Email: `radheshamtaynath8@gmail.com` · Password: `Radhe@87` (approved, all modules ON,
+  credentials enforced at startup like the shared account).
+- Every PDF this account downloads shows the headline
+  **"DR SHINDE EDUCATION SERVICES PVT LTD Latur"**:
+  - Maharashtra (85%) PDFs use a full counselling-report layout: brand header +
+    "NEET PREDICTION REPORT" + date, a student card (Name, Stream/Degree, AIR/Score/SML,
+    Reserved Category with Gender), a prediction analysis summary (High/Moderate/Low/Total),
+    and a line-separated college table (College with code · status · state, Category,
+    Cutoff, Your Rank, Chance) sorted most-competitive first.
+  - AIIMS / All India / Deemed / Veterinary PDFs keep their layouts but the
+    title and footer show the brand.
+- All other users' PDFs are unchanged. Branding is mapped per-email in
+  `backend/app/core/branding.py` — more branded accounts can be added there.

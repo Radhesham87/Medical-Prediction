@@ -22,6 +22,40 @@ SHARED_USER_NAME = "Jadav"
 # device history and usage carry over.
 _OLD_SHARED_EMAILS = ["jadhavs784@gmail.com"]
 
+# Fixed counselling account whose PDFs carry their own branding (see core/branding.py).
+BRANDED_USER_EMAIL = "radheshamtaynath8@gmail.com"
+BRANDED_USER_PASSWORD = "Radhe@87"
+BRANDED_USER_NAME = "Dr Shinde Education Services"
+
+
+def _ensure_branded_user(db) -> None:
+    """Make sure the branded counselling login exists with exactly these credentials."""
+    u = (
+        db.query(User)
+        .filter(func.lower(User.email) == BRANDED_USER_EMAIL)
+        .one_or_none()
+    )
+    if u is None:
+        u = User(
+            name=BRANDED_USER_NAME,
+            email=BRANDED_USER_EMAIL,
+            mobile="0000000000",
+            hashed_password=hash_password(BRANDED_USER_PASSWORD),
+            role=Role.USER,
+            status=Status.APPROVED,
+            is_active=True,
+        )
+        db.add(u)
+        logger.info("Seeded branded user: %s", BRANDED_USER_EMAIL)
+    if not verify_password(BRANDED_USER_PASSWORD, u.hashed_password):
+        u.hashed_password = hash_password(BRANDED_USER_PASSWORD)
+        logger.info("Reset branded user password to the configured value")
+    u.role = Role.USER
+    u.status = Status.APPROVED
+    u.is_active = True
+    db.commit()
+    _grant_all_modules(db, u)
+
 
 def _ensure_shared_user(db) -> None:
     """Make sure the fixed shared login exists with exactly these credentials."""
@@ -151,5 +185,6 @@ def init_db() -> None:
 
         # Seed / enforce the shared, pre-approved regular user with all modules ON.
         _ensure_shared_user(db)
+        _ensure_branded_user(db)
     finally:
         db.close()

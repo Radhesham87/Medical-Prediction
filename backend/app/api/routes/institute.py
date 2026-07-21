@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_approved_user
 from app.api.module_guard import ensure_module_allowed, log_usage
+from app.core.branding import pdf_headline_for
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.institute import (
@@ -94,6 +95,7 @@ def pdf(
         air=payload.air,
         show_degree=payload.show_degree,
         show_category=payload.show_category,
+        brand_headline=pdf_headline_for(user.email),
         results=[r.model_dump() for r in payload.results],
     )
     fname = f"{module}_prediction_{payload.student_name.replace(' ', '_')}.pdf"

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_approved_user
 from app.api.module_guard import ensure_module_allowed, log_usage
+from app.core.branding import pdf_headline_for
 from app.db.session import get_db
 from app.models.prediction import Prediction
 from app.models.user import User
@@ -83,6 +84,7 @@ def download_pdf(
         air=record.air,
         sml=record.sml,
         gender=record.gender,
+        brand_headline=pdf_headline_for(user.email),
         category=record.category,
         results=record.results,
         show_category_rank=record.category.upper() != "OPEN",
