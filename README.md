@@ -412,3 +412,12 @@ out-of-reach colleges get the blue **"Dream"** label. The branded Maharashtra PD
 analysis summary now includes the Dream College box. Rows with missing cutoff data
 for the chosen mode (e.g. no SML value in SML mode) are still skipped. High /
 Moderate / Low meanings are unchanged.
+
+## Single-degree selection + Low instead of Dream (v16)
+
+- **Maharashtra (85%) Degree is now single-select**: radio choices (All, MBBS, BDS,
+  BAMS, BHMS, BUMS, BPTH) — one at a time instead of multiple checkboxes.
+- **The "Dream" label is removed everywhere**: out-of-reach colleges are simply
+  labelled **Low** across all five modules (screen + PDFs). All colleges matching
+  the filters are still always shown; summaries are back to High / Moderate / Low
+  / Total.

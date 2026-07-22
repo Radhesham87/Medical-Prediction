@@ -16,7 +16,7 @@ const EMPTY = {
   score: "",
   air: "",
   sml: "",
-  degrees: [] as string[],
+  degree: "",
   gender: "Male" as "Male" | "Female",
   category: "OPEN",
 };
@@ -34,16 +34,7 @@ export default function PredictPage() {
     else if (getRole() === "admin") router.replace("/admin");
   }, [router]);
 
-  const toggleDegree = (d: string) => {
-    setForm((f) => {
-      if (d === "All") {
-        const all = f.degrees.length === DEGREES.length ? [] : [...DEGREES];
-        return { ...f, degrees: all };
-      }
-      const has = f.degrees.includes(d);
-      return { ...f, degrees: has ? f.degrees.filter((x) => x !== d) : [...f.degrees, d] };
-    });
-  };
+  const pickDegree = (d: string) => setForm((f) => ({ ...f, degree: d }));
 
   const clear = () => {
     setForm(EMPTY);
@@ -53,7 +44,7 @@ export default function PredictPage() {
 
   const submit = async () => {
     if (!form.student_name.trim()) return toast.error("Enter the student name");
-    if (form.degrees.length === 0) return toast.error("Select at least one degree");
+    if (!form.degree) return toast.error("Select a degree");
     if (form.mode === "score" && !form.score) return toast.error("Enter a NEET score");
     if (form.mode === "air" && !form.air) return toast.error("Enter an AIR");
     if (form.mode === "sml" && !form.sml) return toast.error("Enter an SML rank");
@@ -61,7 +52,7 @@ export default function PredictPage() {
     const payload: PredictPayload = {
       student_name: form.student_name.trim(),
       mode: form.mode,
-      degrees: form.degrees,
+      degrees: form.degree === "All" ? [...DEGREES] : [form.degree],
       gender: form.gender,
       category: form.category,
       ...(form.mode === "score"
@@ -96,7 +87,6 @@ export default function PredictPage() {
     }
   };
 
-  const allSelected = form.degrees.length === DEGREES.length;
 
   if (denied) {
     return (
@@ -214,18 +204,28 @@ export default function PredictPage() {
             </select>
           </div>
 
-          {/* Degree checkboxes */}
+          {/* Degree (single choice) */}
           <div className="sm:col-span-2">
-            <label className="label">Degrees</label>
+            <label className="label">Degree</label>
             <div className="flex flex-wrap gap-3">
-              <Checkbox label="All" checked={allSelected} onChange={() => toggleDegree("All")} />
-              {DEGREES.map((d) => (
-                <Checkbox
+              {["All", ...DEGREES].map((d) => (
+                <label
                   key={d}
-                  label={d}
-                  checked={form.degrees.includes(d)}
-                  onChange={() => toggleDegree(d)}
-                />
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                    form.degree === d
+                      ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10"
+                      : "hover:bg-brand-50/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="degree"
+                    checked={form.degree === d}
+                    onChange={() => pickDegree(d)}
+                    className="accent-brand-600"
+                  />
+                  {d}
+                </label>
               ))}
             </div>
           </div>
@@ -265,15 +265,3 @@ export default function PredictPage() {
   );
 }
 
-function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
-  return (
-    <label
-      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-        checked ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10" : "hover:bg-brand-50/50"
-      }`}
-    >
-      <input type="checkbox" checked={checked} onChange={onChange} className="accent-brand-600" />
-      {label}
-    </label>
-  );
-}

@@ -130,7 +130,7 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
     return None
 
 
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "Dream": 3}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2}
 
 
 def predict(
@@ -175,8 +175,8 @@ def predict(
                 continue
             band = _band_by_air(float(air), float(cutoff_air))
         if band is None:
-            # Out of realistic range -> still shown, labelled as a Dream college.
-            band = "Dream"
+            # Out of realistic range -> still shown, labelled Low.
+            band = "Low"
 
         raw_rank = r["category_rank"]
         rank_val = None if pd.isna(raw_rank) else str(raw_rank)
