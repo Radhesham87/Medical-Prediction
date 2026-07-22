@@ -29,7 +29,7 @@ SCORE_LOW_FLOOR = -20
 AIR_HIGH_RATIO = 0.85
 AIR_MODERATE_RATIO = 1.05
 AIR_LOW_RATIO = 1.25
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "Dream": 3}
 
 
 def _band_by_score(candidate: float, cutoff: float) -> Optional[str]:
@@ -258,7 +258,8 @@ def predict_institute(
             else _band_by_air(float(air), cutoff_air)
         )
         if band is None:
-            continue
+            # Out of realistic range -> still shown, labelled as a Dream college.
+            band = "Dream"
         rows.append(
             {
                 "institute_name": str(r["_institute"]),

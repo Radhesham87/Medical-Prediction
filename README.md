@@ -391,3 +391,14 @@ name**, then Category, Cutoff, Your AIR/Score, Chance — sorted most-competitiv
   Bright Future strips (jadav784 also keeps the watermark).
 - The Dr Shinde account gets it under his text headline.
 - Plain users keep the standard institute PDF layouts.
+
+## All colleges shown in the institute modules (v14)
+
+AIIMS, All India (15%), Veterinary and Deemed now return **every college matching the
+selected filters** (degree, category, state) — on screen and in the PDF — instead of
+only those within the chance bands. Colleges whose cutoff is out of realistic reach
+are included with a new **"Dream"** chance label (blue), matching the counselling-report
+convention; High/Moderate/Low keep their meanings. The web summary and the branded
+PDF's analysis summary gain a "Dream College" count box, and Dream rows sort after
+Low in the standard band-ordered views (branded PDFs stay sorted by cutoff, so Dream
+colleges naturally appear at the top like the sample). Maharashtra (85%) is unchanged.

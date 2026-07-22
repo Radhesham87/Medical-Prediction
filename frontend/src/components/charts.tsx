@@ -6,28 +6,29 @@ const CHANCE_COLOR: Record<string, string> = {
   High: "#16a34a",
   Moderate: "#d97706",
   Low: "#dc2626",
+  Dream: "#2563eb",
 };
 
 /** Summary pills + a stacked distribution bar for High / Moderate / Low. */
 export function ChanceSummary({ items }: { items: { chance: string }[] }) {
-  const counts = { High: 0, Moderate: 0, Low: 0 } as Record<string, number>;
+  const counts = { High: 0, Moderate: 0, Low: 0, Dream: 0 } as Record<string, number>;
   for (const it of items) if (it.chance in counts) counts[it.chance] += 1;
   const total = items.length || 1;
 
   return (
     <div className="card p-4">
-      <div className="grid grid-cols-3 gap-3">
-        {(["High", "Moderate", "Low"] as const).map((c) => (
+      <div className="grid grid-cols-4 gap-3">
+        {(["High", "Moderate", "Low", "Dream"] as const).map((c) => (
           <div key={c} className="text-center">
             <div className="text-2xl font-bold" style={{ color: CHANCE_COLOR[c] }}>
               {counts[c]}
             </div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">{c} chance</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">{c === "Dream" ? "Dream college" : `${c} chance`}</div>
           </div>
         ))}
       </div>
       <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-        {(["High", "Moderate", "Low"] as const).map((c) => (
+        {(["High", "Moderate", "Low", "Dream"] as const).map((c) => (
           <div
             key={c}
             style={{ width: `${(counts[c] / total) * 100}%`, backgroundColor: CHANCE_COLOR[c] }}
