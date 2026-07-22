@@ -23,6 +23,7 @@ BAND_COLORS = {
     "High": colors.HexColor("#16a34a"),
     "Moderate": colors.HexColor("#d97706"),
     "Low": colors.HexColor("#dc2626"),
+    "Dream": colors.HexColor("#2563eb"),
 }
 
 
@@ -280,7 +281,7 @@ def _build_branded_pdf(
 
     # ------- analysis summary -------
     story += [Paragraph("PREDICTION ANALYSIS SUMMARY", sect), Spacer(1, 5)]
-    counts = {"High": 0, "Moderate": 0, "Low": 0}
+    counts = {"High": 0, "Moderate": 0, "Low": 0, "Dream": 0}
     for r in results:
         if r.get("chance") in counts:
             counts[r["chance"]] += 1
@@ -290,14 +291,16 @@ def _build_branded_pdf(
         [Paragraph(str(counts["High"]), big(counts["High"], BAND_COLORS["High"])), Paragraph("High Chance", small)],
         [Paragraph(str(counts["Moderate"]), big(counts["Moderate"], BAND_COLORS["Moderate"])), Paragraph("Moderate Chance", small)],
         [Paragraph(str(counts["Low"]), big(counts["Low"], BAND_COLORS["Low"])), Paragraph("Low Chance", small)],
+        [Paragraph(str(counts["Dream"]), big(counts["Dream"], BAND_COLORS["Dream"])), Paragraph("Dream College", small)],
         [Paragraph(str(len(results)), big(len(results), BLUE)), Paragraph("Total Colleges", small)],
     ]
-    summ = Table([boxes], colWidths=[45.5 * mm] * 4)
+    summ = Table([boxes], colWidths=[36.4 * mm] * 5)
     summ.setStyle(TableStyle([
         ("BOX", (0, 0), (0, 0), 0.75, LINE),
         ("BOX", (1, 0), (1, 0), 0.75, LINE),
         ("BOX", (2, 0), (2, 0), 0.75, LINE),
         ("BOX", (3, 0), (3, 0), 0.75, LINE),
+        ("BOX", (4, 0), (4, 0), 0.75, LINE),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 7),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 7),

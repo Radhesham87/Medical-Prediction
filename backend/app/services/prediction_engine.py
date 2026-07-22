@@ -130,7 +130,7 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
     return None
 
 
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "Dream": 3}
 
 
 def predict(
@@ -163,15 +163,20 @@ def predict(
         cutoff_air = r["AIR"]
         cutoff_sml = r["SML"]
         if mode == "score":
+            if pd.isna(cutoff_score):
+                continue
             band = _band_by_score(float(score), float(cutoff_score))
         elif mode == "sml":
             if pd.isna(cutoff_sml) or cutoff_sml <= 0:
                 continue
             band = _band_by_air(float(sml), float(cutoff_sml))  # lower SML is better, like AIR
         else:
+            if pd.isna(cutoff_air) or cutoff_air <= 0:
+                continue
             band = _band_by_air(float(air), float(cutoff_air))
         if band is None:
-            continue
+            # Out of realistic range -> still shown, labelled as a Dream college.
+            band = "Dream"
 
         raw_rank = r["category_rank"]
         rank_val = None if pd.isna(raw_rank) else str(raw_rank)

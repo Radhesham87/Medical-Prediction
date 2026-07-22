@@ -402,3 +402,13 @@ convention; High/Moderate/Low keep their meanings. The web summary and the brand
 PDF's analysis summary gain a "Dream College" count box, and Dream rows sort after
 Low in the standard band-ordered views (branded PDFs stay sorted by cutoff, so Dream
 colleges naturally appear at the top like the sample). Maharashtra (85%) is unchanged.
+
+## All colleges in Maharashtra (85%) too (v15)
+
+Maharashtra (85%) now behaves like the institute modules: for the selected degree(s)
+(MBBS, BDS, BAMS, BHMS, BUMS, BPTH...), category and gender, **every matching college
+is shown** on screen and in the PDF regardless of the entered AIR / Score / SML —
+out-of-reach colleges get the blue **"Dream"** label. The branded Maharashtra PDF's
+analysis summary now includes the Dream College box. Rows with missing cutoff data
+for the chosen mode (e.g. no SML value in SML mode) are still skipped. High /
+Moderate / Low meanings are unchanged.
