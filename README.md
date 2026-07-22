@@ -358,3 +358,13 @@ sample); per-email mapping in `backend/app/core/branding.py`.
   most-competitive first.
 - Its other module PDFs keep the letterhead with the standard layouts. All other
   accounts are unchanged.
+
+## Shared account gets the Bright Future report (v11)
+
+The shared multi-device account `jadav784@gmail.com` (password unchanged: `Jadav@95`)
+now downloads the same branded PDFs as the Bright Future account: letterhead header
+strip on the top of the first page, offices/contact block on the bottom of the last
+page, and the counselling-report body (report label + date, student card, analysis
+summary, line-separated college table) in between. Applies to all five modules
+(institute modules keep their standard tables inside the letterhead). Dr Shinde's
+account and all other users are unchanged.

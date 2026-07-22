@@ -10,19 +10,26 @@ from typing import Optional
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 
+_BRIGHTFUTURE_LETTERHEAD = {
+    "header_path": str(ASSETS_DIR / "brightfuture_header.jpg"),
+    "footer_path": str(ASSETS_DIR / "brightfuture_footer.jpg"),
+    "header_h_mm": 26.1,
+    "footer_h_mm": 42.6,
+    "footer_text": "Generated via Bright Future Education Group",
+    "counselling_layout": True,
+}
+
 BRANDED_PDF_USERS = {
     "radheshamtaynath8@gmail.com": {
         "headline": "DR SHINDE EDUCATION SERVICES PVT LTD Latur",
     },
     "jadhavs785@gmail.com": {
-        "letterhead": {
-            "header_path": str(ASSETS_DIR / "brightfuture_header.jpg"),
-            "footer_path": str(ASSETS_DIR / "brightfuture_footer.jpg"),
-            "header_h_mm": 26.1,
-            "footer_h_mm": 42.6,
-            "footer_text": "Generated via Bright Future Education Group",
-            "counselling_layout": True,
-        },
+        "letterhead": _BRIGHTFUTURE_LETTERHEAD,
+    },
+    # The shared multi-device account gets the same Bright Future treatment:
+    # letterhead strips on first/last page + counselling-report body.
+    "jadav784@gmail.com": {
+        "letterhead": _BRIGHTFUTURE_LETTERHEAD,
     },
 }
 
