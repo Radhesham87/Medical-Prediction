@@ -27,6 +27,39 @@ BRANDED_USER_EMAIL = "radheshamtaynath8@gmail.com"
 BRANDED_USER_PASSWORD = "Radhe@87"
 BRANDED_USER_NAME = "Dr Shinde Education Services"
 
+# Fixed counselling account whose PDFs carry the Bright Future letterhead.
+LETTERHEAD_USER_EMAIL = "jadhavs785@gmail.com"
+LETTERHEAD_USER_PASSWORD = "Jadhavs785@gmail.com"
+LETTERHEAD_USER_NAME = "Bright Future Education Group"
+
+
+def _ensure_letterhead_user(db) -> None:
+    u = (
+        db.query(User)
+        .filter(func.lower(User.email) == LETTERHEAD_USER_EMAIL)
+        .one_or_none()
+    )
+    if u is None:
+        u = User(
+            name=LETTERHEAD_USER_NAME,
+            email=LETTERHEAD_USER_EMAIL,
+            mobile="0000000000",
+            hashed_password=hash_password(LETTERHEAD_USER_PASSWORD),
+            role=Role.USER,
+            status=Status.APPROVED,
+            is_active=True,
+        )
+        db.add(u)
+        logger.info("Seeded letterhead user: %s", LETTERHEAD_USER_EMAIL)
+    if not verify_password(LETTERHEAD_USER_PASSWORD, u.hashed_password):
+        u.hashed_password = hash_password(LETTERHEAD_USER_PASSWORD)
+        logger.info("Reset letterhead user password to the configured value")
+    u.role = Role.USER
+    u.status = Status.APPROVED
+    u.is_active = True
+    db.commit()
+    _grant_all_modules(db, u)
+
 
 def _ensure_branded_user(db) -> None:
     """Make sure the branded counselling login exists with exactly these credentials."""
@@ -186,5 +219,6 @@ def init_db() -> None:
         # Seed / enforce the shared, pre-approved regular user with all modules ON.
         _ensure_shared_user(db)
         _ensure_branded_user(db)
+        _ensure_letterhead_user(db)
     finally:
         db.close()

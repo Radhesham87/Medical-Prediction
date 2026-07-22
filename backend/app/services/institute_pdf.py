@@ -55,12 +55,18 @@ def build_institute_pdf(
     show_category: bool,
     results: List[dict],
     brand_headline: Optional[str] = None,
+    letterhead: Optional[dict] = None,
 ) -> bytes:
     buf = BytesIO()
     module_title = MODULE_TITLES.get(module, module.title())
+    top_margin = 18 * mm
+    bottom_margin = 20 * mm
+    if letterhead:
+        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=15 * mm, rightMargin=15 * mm, topMargin=18 * mm, bottomMargin=20 * mm,
+        leftMargin=15 * mm, rightMargin=15 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
         title=f"{module_title} Prediction - {student_name}",
     )
     styles = getSampleStyleSheet()
@@ -134,7 +140,14 @@ def build_institute_pdf(
             ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ]))
         story.append(tbl)
-        doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+        if letterhead:
+            from app.services.letterhead import make_letterhead_canvas
+            doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+        else:
+            def _pgv(canvas, doc_):
+                _footer(canvas, doc_, brand_headline)
+
+            doc.build(story, onFirstPage=_pgv, onLaterPages=_pgv)
         return buf.getvalue()
 
     # Build headers dynamically.
@@ -185,8 +198,12 @@ def build_institute_pdf(
     tbl.setStyle(TableStyle(style))
     story.append(tbl)
 
-    def _pg(canvas, doc_):
-        _footer(canvas, doc_, brand_headline)
+    if letterhead:
+        from app.services.letterhead import make_letterhead_canvas
+        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+    else:
+        def _pg(canvas, doc_):
+            _footer(canvas, doc_, brand_headline)
 
-    doc.build(story, onFirstPage=_pg, onLaterPages=_pg)
+        doc.build(story, onFirstPage=_pg, onLaterPages=_pg)
     return buf.getvalue()

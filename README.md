@@ -328,3 +328,19 @@ A fixed counselling account is seeded whose PDF downloads carry their own brandi
     title and footer show the brand.
 - All other users' PDFs are unchanged. Branding is mapped per-email in
   `backend/app/core/branding.py` — more branded accounts can be added there.
+
+## Letterhead PDF account (v9)
+
+A second branded account is seeded: `jadhavs785@gmail.com` (password is the same
+string as the email, exactly as configured). Approved, all modules ON, credentials
+enforced at startup.
+
+Every PDF this account downloads is stamped with the **Bright Future Education
+Group letterhead**: the header strip (logo + "Dr Sagar Jadhav Sir · MBBS MD ·
+Your Medical Admission partner") at the **top of the first page**, and the
+offices/contact block at the **bottom of the last page**. Other pages carry a
+small "Generated via Bright Future Education Group · Page N of M" footer.
+Applies to all five modules' PDFs; every other user's PDFs are unchanged.
+
+Assets live in `backend/app/assets/` (extracted from the supplied letterhead
+sample); per-email mapping in `backend/app/core/branding.py`.

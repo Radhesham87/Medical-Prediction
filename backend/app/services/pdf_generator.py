@@ -51,6 +51,7 @@ def build_prediction_pdf(
     results: List[dict],
     show_category_rank: bool,
     brand_headline: Optional[str] = None,
+    letterhead: Optional[dict] = None,
 ) -> bytes:
     if brand_headline:
         return _build_branded_pdf(
@@ -65,9 +66,14 @@ def build_prediction_pdf(
             results=results,
         )
     buf = BytesIO()
+    top_margin = 18 * mm
+    bottom_margin = 20 * mm
+    if letterhead:
+        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=15 * mm, rightMargin=15 * mm, topMargin=18 * mm, bottomMargin=20 * mm,
+        leftMargin=15 * mm, rightMargin=15 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
         title=f"NEET Prediction - {student_name}",
     )
     styles = getSampleStyleSheet()
@@ -152,7 +158,11 @@ def build_prediction_pdf(
     tbl.setStyle(TableStyle(style))
     story.append(tbl)
 
-    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    if letterhead:
+        from app.services.letterhead import make_letterhead_canvas
+        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+    else:
+        doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buf.getvalue()
 
 
