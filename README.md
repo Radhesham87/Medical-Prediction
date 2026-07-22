@@ -421,3 +421,8 @@ Moderate / Low meanings are unchanged.
   labelled **Low** across all five modules (screen + PDFs). All colleges matching
   the filters are still always shown; summaries are back to High / Moderate / Low
   / Total.
+
+## v16.1 — "All" removed from Maharashtra Degree
+
+The Degree choice on Maharashtra (85%) now offers only the six degrees
+(MBBS, BDS, BAMS, BHMS, BUMS, BPTH) — one must be selected; there is no "All" option.

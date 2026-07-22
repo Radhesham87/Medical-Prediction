@@ -52,7 +52,7 @@ export default function PredictPage() {
     const payload: PredictPayload = {
       student_name: form.student_name.trim(),
       mode: form.mode,
-      degrees: form.degree === "All" ? [...DEGREES] : [form.degree],
+      degrees: [form.degree],
       gender: form.gender,
       category: form.category,
       ...(form.mode === "score"
@@ -208,7 +208,7 @@ export default function PredictPage() {
           <div className="sm:col-span-2">
             <label className="label">Degree</label>
             <div className="flex flex-wrap gap-3">
-              {["All", ...DEGREES].map((d) => (
+              {DEGREES.map((d) => (
                 <label
                   key={d}
                   className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
