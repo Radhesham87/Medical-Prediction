@@ -27,9 +27,14 @@ BRANDED_PDF_USERS = {
         "letterhead": _BRIGHTFUTURE_LETTERHEAD,
     },
     # The shared multi-device account gets the same Bright Future treatment:
-    # letterhead strips on first/last page + counselling-report body.
+    # letterhead strips on first/last page + counselling-report body,
+    # plus a faint logo watermark behind the content of every page.
     "jadav784@gmail.com": {
-        "letterhead": _BRIGHTFUTURE_LETTERHEAD,
+        "letterhead": {
+            **_BRIGHTFUTURE_LETTERHEAD,
+            "watermark_path": str(ASSETS_DIR / "brightfuture_watermark.jpg"),
+            "watermark_w_mm": 110,
+        },
     },
 }
 

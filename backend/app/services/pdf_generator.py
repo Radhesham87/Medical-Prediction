@@ -160,8 +160,10 @@ def build_prediction_pdf(
     story.append(tbl)
 
     if letterhead:
-        from app.services.letterhead import make_letterhead_canvas
-        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+        from app.services.letterhead import make_letterhead_canvas, watermark_onpage
+        wm = watermark_onpage(letterhead)
+        doc.build(story, onFirstPage=wm, onLaterPages=wm,
+                  canvasmaker=make_letterhead_canvas(letterhead))
     else:
         doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buf.getvalue()
@@ -357,8 +359,10 @@ def _build_branded_pdf(
     story.append(tbl)
 
     if letterhead:
-        from app.services.letterhead import make_letterhead_canvas
-        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+        from app.services.letterhead import make_letterhead_canvas, watermark_onpage
+        wm = watermark_onpage(letterhead)
+        doc.build(story, onFirstPage=wm, onLaterPages=wm,
+                  canvasmaker=make_letterhead_canvas(letterhead))
         return buf.getvalue()
 
     def _pg(canvas, d):

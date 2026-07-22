@@ -368,3 +368,12 @@ page, and the counselling-report body (report label + date, student card, analys
 summary, line-separated college table) in between. Applies to all five modules
 (institute modules keep their standard tables inside the letterhead). Dr Shinde's
 account and all other users are unchanged.
+
+## Watermark for the shared account (v12)
+
+PDFs downloaded by `jadav784@gmail.com` (login unchanged: `Jadav@95`) now also carry
+the **Bright Future logo as a faint watermark** centered behind the content of every
+page (pre-faded ~10% so text stays fully readable), in addition to the letterhead
+strips and counselling-report body. Asset: `backend/app/assets/brightfuture_watermark.jpg`.
+The `jadhavs785@gmail.com` account keeps letterhead without the watermark; Dr Shinde
+and normal users are unchanged.

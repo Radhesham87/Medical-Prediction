@@ -141,8 +141,10 @@ def build_institute_pdf(
         ]))
         story.append(tbl)
         if letterhead:
-            from app.services.letterhead import make_letterhead_canvas
-            doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+            from app.services.letterhead import make_letterhead_canvas, watermark_onpage
+            wm = watermark_onpage(letterhead)
+            doc.build(story, onFirstPage=wm, onLaterPages=wm,
+                      canvasmaker=make_letterhead_canvas(letterhead))
         else:
             def _pgv(canvas, doc_):
                 _footer(canvas, doc_, brand_headline)
@@ -199,8 +201,10 @@ def build_institute_pdf(
     story.append(tbl)
 
     if letterhead:
-        from app.services.letterhead import make_letterhead_canvas
-        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+        from app.services.letterhead import make_letterhead_canvas, watermark_onpage
+        wm = watermark_onpage(letterhead)
+        doc.build(story, onFirstPage=wm, onLaterPages=wm,
+                  canvasmaker=make_letterhead_canvas(letterhead))
     else:
         def _pg(canvas, doc_):
             _footer(canvas, doc_, brand_headline)

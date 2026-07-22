@@ -7,6 +7,26 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as _canvas
 
 
+def watermark_onpage(letterhead: dict):
+    """Page callback that paints the (pre-faded) watermark image centered on the
+    page. onPage callbacks run before the flowables are drawn, so the watermark
+    sits behind the content. Returns a no-op when no watermark is configured."""
+    path = (letterhead or {}).get("watermark_path")
+    w_mm = float((letterhead or {}).get("watermark_w_mm", 110))
+
+    def _draw(canvas, doc):
+        if not path:
+            return
+        W, H = A4
+        w = w_mm * mm
+        canvas.saveState()
+        canvas.drawImage(path, (W - w) / 2, (H - w) / 2, width=w, height=w,
+                         preserveAspectRatio=True, anchor="c")
+        canvas.restoreState()
+
+    return _draw
+
+
 def make_letterhead_canvas(letterhead: dict):
     header_path = letterhead.get("header_path")
     footer_path = letterhead.get("footer_path")
