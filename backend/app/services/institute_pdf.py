@@ -13,7 +13,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 PRIMARY = colors.HexColor("#1e3a8a")
 LIGHT = colors.HexColor("#eff6ff")
@@ -57,6 +58,19 @@ def build_institute_pdf(
     brand_headline: Optional[str] = None,
     letterhead: Optional[dict] = None,
 ) -> bytes:
+    if brand_headline or (letterhead and letterhead.get("counselling_layout")):
+        return _build_branded_institute_pdf(
+            module=module,
+            brand=brand_headline,
+            student_name=student_name,
+            mode=mode,
+            score=score,
+            air=air,
+            show_degree=show_degree,
+            show_category=show_category,
+            results=results,
+            letterhead=letterhead,
+        )
     buf = BytesIO()
     module_title = MODULE_TITLES.get(module, module.title())
     top_margin = 18 * mm
@@ -210,4 +224,208 @@ def build_institute_pdf(
             _footer(canvas, doc_, brand_headline)
 
         doc.build(story, onFirstPage=_pg, onLaterPages=_pg)
+    return buf.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Counselling-report layout for the institute modules (branded accounts).
+# Same style as the Maharashtra branded report: header / student card /
+# analysis summary / line-separated table with the state under each institute.
+# ---------------------------------------------------------------------------
+def _build_branded_institute_pdf(
+    *,
+    module: str,
+    brand: Optional[str],
+    student_name: str,
+    mode: str,
+    score: Optional[float],
+    air: Optional[int],
+    show_degree: bool,
+    show_category: bool,
+    results: List[dict],
+    letterhead: Optional[dict] = None,
+) -> bytes:
+    from app.services.pdf_generator import BLUE, CARD, GREY, LINE, NAVY
+
+    module_title = MODULE_TITLES.get(module, module.title())
+    buf = BytesIO()
+    top_margin = 14 * mm
+    bottom_margin = 20 * mm
+    if letterhead:
+        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=14 * mm, rightMargin=14 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
+        title=f"{brand + ' - ' if brand else ''}{module_title} Prediction - {student_name}",
+    )
+
+    lbl = ParagraphStyle("lbl", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY, leading=9)
+    val = ParagraphStyle("val", fontName="Helvetica-Bold", fontSize=11, textColor=NAVY, leading=14)
+    brand_style = ParagraphStyle("brand", fontName="Helvetica-Bold", fontSize=15, textColor=NAVY, leading=18)
+    rpt = ParagraphStyle("rpt", fontName="Helvetica-Bold", fontSize=8.5, textColor=BLUE, alignment=TA_RIGHT)
+    rdate = ParagraphStyle("rdate", fontName="Helvetica", fontSize=8, textColor=GREY, alignment=TA_RIGHT, leading=11)
+    sect = ParagraphStyle("sect", fontName="Helvetica-Bold", fontSize=7.5, textColor=GREY, leading=10)
+    cname = ParagraphStyle("cname", fontName="Helvetica-Bold", fontSize=8.5, textColor=NAVY, leading=10)
+    csub = ParagraphStyle("csub", fontName="Helvetica", fontSize=6.5, textColor=GREY, leading=8)
+    cell_s = ParagraphStyle("cell", fontName="Helvetica", fontSize=8, textColor=NAVY, leading=10)
+    cellsub = ParagraphStyle("cellsub", fontName="Helvetica", fontSize=6.5, textColor=GREY, leading=8)
+
+    now = datetime.now(timezone.utc).astimezone().strftime("%d %b %Y, %I:%M %p")
+
+    left_cell = Paragraph(brand, brand_style) if brand else Paragraph("", brand_style)
+    head = Table(
+        [[left_cell, [Paragraph("NEET PREDICTION REPORT", rpt), Paragraph(now, rdate)]]],
+        colWidths=[115 * mm, 67 * mm],
+    )
+    head.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story = [head, Spacer(1, 5), HRFlowable(width="100%", thickness=2, color=BLUE), Spacer(1, 10)]
+
+    # ------- student card -------
+    vet = module == "veterinary"
+    if mode == "score":
+        in_label = "MARKS" if vet else "NEET SCORE"
+        in_value = f"{score:g}"
+    else:
+        in_label = "RANK" if vet else "ALL INDIA RANK (AIR)"
+        in_value = f"{int(air):,}"
+
+    degrees_seen: List[str] = []
+    cats_seen: List[str] = []
+    for r in results:
+        d = r.get("degree")
+        if show_degree and d and d not in degrees_seen:
+            degrees_seen.append(d)
+        cat = r.get("category")
+        if show_category and cat and cat not in cats_seen:
+            cats_seen.append(cat)
+    stream_txt = module_title + (" \u00b7 " + ", ".join(degrees_seen) if degrees_seen else "")
+
+    card_rows = [[
+        [Paragraph("STUDENT NAME", lbl), Paragraph(student_name, val)],
+        [Paragraph("STREAM / DEGREE", lbl), Paragraph(stream_txt, val)],
+        [Paragraph(in_label, lbl), Paragraph(in_value, val)],
+    ]]
+    if cats_seen:
+        card_rows.append([
+            [Paragraph("RESERVED CATEGORY", lbl), Paragraph(", ".join(cats_seen), val)],
+            "",
+            "",
+        ])
+    card = Table(card_rows, colWidths=[60 * mm, 72 * mm, 50 * mm])
+    card_style = [
+        ("BACKGROUND", (0, 0), (-1, -1), CARD),
+        ("BOX", (0, 0), (-1, -1), 0.75, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 9),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+    ]
+    if len(card_rows) > 1:
+        card_style += [
+            ("TOPPADDING", (0, 1), (-1, 1), 4),
+            ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
+        ]
+    card.setStyle(TableStyle(card_style))
+    story += [card, Spacer(1, 12)]
+
+    # ------- analysis summary -------
+    story += [Paragraph("PREDICTION ANALYSIS SUMMARY", sect), Spacer(1, 5)]
+    counts = {"High": 0, "Moderate": 0, "Low": 0}
+    for r in results:
+        if r.get("chance") in counts:
+            counts[r["chance"]] += 1
+    big = lambda v, c: ParagraphStyle("b", fontName="Helvetica-Bold", fontSize=14, textColor=c, leading=16)
+    small = ParagraphStyle("sm", fontName="Helvetica", fontSize=7, textColor=GREY, leading=9)
+    boxes = [
+        [Paragraph(str(counts["High"]), big(counts["High"], BAND_COLORS["High"])), Paragraph("High Chance", small)],
+        [Paragraph(str(counts["Moderate"]), big(counts["Moderate"], BAND_COLORS["Moderate"])), Paragraph("Moderate Chance", small)],
+        [Paragraph(str(counts["Low"]), big(counts["Low"], BAND_COLORS["Low"])), Paragraph("Low Chance", small)],
+        [Paragraph(str(len(results)), big(len(results), BLUE)), Paragraph("Total Colleges", small)],
+    ]
+    summ = Table([boxes], colWidths=[45.5 * mm] * 4)
+    summ.setStyle(TableStyle([
+        ("BOX", (0, 0), (0, 0), 0.75, LINE),
+        ("BOX", (1, 0), (1, 0), 0.75, LINE),
+        ("BOX", (2, 0), (2, 0), 0.75, LINE),
+        ("BOX", (3, 0), (3, 0), 0.75, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 9),
+    ]))
+    story += [summ, Spacer(1, 14)]
+
+    # ------- college table -------
+    if mode == "score":
+        mode_tag = "MARKS" if vet else "SCORE"
+        your_value = f"{score:g}"
+        cutoff_fmt = lambda r: str(r.get("score", "-"))
+        ordered = sorted(results, key=lambda r: -(r.get("score") or 0))
+    else:
+        mode_tag = "RANK" if vet else "AIR"
+        your_value = f"{int(air):,}"
+        cutoff_fmt = lambda r: f"{int(r['air']):,}" if r.get("air") is not None else "-"
+        ordered = sorted(results, key=lambda r: (r.get("air") is None, r.get("air") or 0))
+
+    hdr = ParagraphStyle("hdr", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY)
+    your_style = ParagraphStyle("your", fontName="Helvetica-Bold", fontSize=8.5, textColor=NAVY)
+    data = [[
+        Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
+        Paragraph("CUTOFF", hdr), Paragraph("YOUR " + mode_tag, hdr), Paragraph("CHANCE", hdr),
+    ]]
+    row_styles = []
+    for i, r in enumerate(ordered, start=1):
+        band = r.get("chance", "")
+        sub_parts = []
+        if show_degree and r.get("degree"):
+            sub_parts.append(str(r["degree"]))
+        sub_parts.append(str(r.get("state_name", "")).title())
+        data.append([
+            [Paragraph(str(r.get("institute_name", "")).title(), cname),
+             Paragraph(" \u00b7 ".join(sub_parts), csub)],
+            [Paragraph(str(r.get("category") or "-"), cell_s), Paragraph(mode_tag, cellsub)],
+            Paragraph(cutoff_fmt(r), cell_s),
+            Paragraph(your_value, your_style),
+            Paragraph(band, ParagraphStyle(
+                "bnd", fontName="Helvetica-Bold", fontSize=8,
+                textColor=BAND_COLORS.get(band, NAVY))),
+        ])
+        row_styles.append(("LINEBELOW", (0, i), (-1, i), 0.5, LINE))
+
+    tbl = Table(data, colWidths=[86 * mm, 26 * mm, 24 * mm, 24 * mm, 22 * mm], repeatRows=1)
+    tbl.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (-1, 0), 0.9, colors.HexColor("#cbd5e1")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 1), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 5),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        *row_styles,
+    ]))
+    story.append(tbl)
+
+    if letterhead:
+        from app.services.letterhead import make_letterhead_canvas, watermark_onpage
+        wm = watermark_onpage(letterhead)
+        doc.build(story, onFirstPage=wm, onLaterPages=wm,
+                  canvasmaker=make_letterhead_canvas(letterhead))
+        return buf.getvalue()
+
+    def _pg(canvas, d):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(GREY)
+        canvas.drawString(14 * mm, 10 * mm, f"Generated via {brand} \u2022 Smart Predictor Engine")
+        canvas.drawRightString(A4[0] - 14 * mm, 10 * mm, f"Report Page {d.page}")
+        canvas.setStrokeColor(LINE)
+        canvas.line(14 * mm, 13 * mm, A4[0] - 14 * mm, 13 * mm)
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_pg, onLaterPages=_pg)
     return buf.getvalue()

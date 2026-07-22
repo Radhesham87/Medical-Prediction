@@ -377,3 +377,17 @@ page (pre-faded ~10% so text stays fully readable), in addition to the letterhea
 strips and counselling-report body. Asset: `backend/app/assets/brightfuture_watermark.jpg`.
 The `jadhavs785@gmail.com` account keeps letterhead without the watermark; Dr Shinde
 and normal users are unchanged.
+
+## Counselling-report format for institute modules (v13)
+
+For the branded accounts, the **AIIMS, All India (15%), Veterinary and Deemed** PDFs now
+use the same counselling-report format as Maharashtra: report label + date, student card
+(Name, Stream/Degree, AIR/Score — Marks/Rank labels for Veterinary — and Reserved
+Category when the module has one), Prediction Analysis Summary boxes, and the
+line-separated table with the **state (and degree, when applicable) under each institute
+name**, then Category, Cutoff, Your AIR/Score, Chance — sorted most-competitive first.
+
+- Letterhead accounts (`jadav784@gmail.com`, `jadhavs785@gmail.com`) get it between the
+  Bright Future strips (jadav784 also keeps the watermark).
+- The Dr Shinde account gets it under his text headline.
+- Plain users keep the standard institute PDF layouts.
