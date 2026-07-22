@@ -21,6 +21,7 @@ BRANDED_PDF_USERS = {
             "header_h_mm": 26.1,
             "footer_h_mm": 42.6,
             "footer_text": "Generated via Bright Future Education Group",
+            "counselling_layout": True,
         },
     },
 }

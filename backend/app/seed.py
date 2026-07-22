@@ -29,7 +29,7 @@ BRANDED_USER_NAME = "Dr Shinde Education Services"
 
 # Fixed counselling account whose PDFs carry the Bright Future letterhead.
 LETTERHEAD_USER_EMAIL = "jadhavs785@gmail.com"
-LETTERHEAD_USER_PASSWORD = "Jadhavs785@gmail.com"
+LETTERHEAD_USER_PASSWORD = "Bright2026"
 LETTERHEAD_USER_NAME = "Bright Future Education Group"
 
 

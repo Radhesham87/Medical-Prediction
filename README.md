@@ -331,9 +331,8 @@ A fixed counselling account is seeded whose PDF downloads carry their own brandi
 
 ## Letterhead PDF account (v9)
 
-A second branded account is seeded: `jadhavs785@gmail.com` (password is the same
-string as the email, exactly as configured). Approved, all modules ON, credentials
-enforced at startup.
+A second branded account is seeded: `jadhavs785@gmail.com` · Password: `Bright2026`.
+Approved, all modules ON, credentials enforced at startup.
 
 Every PDF this account downloads is stamped with the **Bright Future Education
 Group letterhead**: the header strip (logo + "Dr Sagar Jadhav Sir · MBBS MD ·
@@ -344,3 +343,18 @@ Applies to all five modules' PDFs; every other user's PDFs are unchanged.
 
 Assets live in `backend/app/assets/` (extracted from the supplied letterhead
 sample); per-email mapping in `backend/app/core/branding.py`.
+
+
+## Bright Future counselling-style body (v10)
+
+- The `jadhavs785@gmail.com` password changed to **Bright2026** (enforced automatically
+  at startup, including on existing databases).
+- Its **Maharashtra (85%) PDF** now combines both samples: the Bright Future letterhead
+  images stay on the **top of the first page** and the **bottom of the last page**, and the
+  report body between them uses the counselling-report format — "NEET PREDICTION REPORT"
+  + date line, student card (Name, Stream/Degree, AIR/Score/SML, Reserved Category with
+  Gender), Prediction Analysis Summary boxes, and the line-separated college table
+  (College with code · status · state, Category, Cutoff, Your Rank, Chance) sorted
+  most-competitive first.
+- Its other module PDFs keep the letterhead with the standard layouts. All other
+  accounts are unchanged.

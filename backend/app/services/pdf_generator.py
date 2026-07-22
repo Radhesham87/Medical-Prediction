@@ -53,7 +53,7 @@ def build_prediction_pdf(
     brand_headline: Optional[str] = None,
     letterhead: Optional[dict] = None,
 ) -> bytes:
-    if brand_headline:
+    if brand_headline or (letterhead and letterhead.get("counselling_layout")):
         return _build_branded_pdf(
             brand=brand_headline,
             student_name=student_name,
@@ -64,6 +64,7 @@ def build_prediction_pdf(
             gender=gender,
             category=category,
             results=results,
+            letterhead=letterhead,
         )
     buf = BytesIO()
     top_margin = 18 * mm
@@ -180,7 +181,7 @@ CARD = colors.HexColor("#f8fafc")
 
 def _build_branded_pdf(
     *,
-    brand: str,
+    brand: Optional[str],
     student_name: str,
     mode: str,
     score: Optional[float],
@@ -189,12 +190,18 @@ def _build_branded_pdf(
     gender: str,
     category: str,
     results: List[dict],
+    letterhead: Optional[dict] = None,
 ) -> bytes:
     buf = BytesIO()
+    top_margin = 14 * mm
+    bottom_margin = 20 * mm
+    if letterhead:
+        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=14 * mm, rightMargin=14 * mm, topMargin=14 * mm, bottomMargin=20 * mm,
-        title=f"{brand} - NEET Prediction - {student_name}",
+        leftMargin=14 * mm, rightMargin=14 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
+        title=f"{brand + ' - ' if brand else ''}NEET Prediction - {student_name}",
     )
 
     lbl = ParagraphStyle("lbl", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY, leading=9)
@@ -211,8 +218,11 @@ def _build_branded_pdf(
     now = datetime.now(timezone.utc).astimezone().strftime("%d %b %Y, %I:%M %p")
 
     # ------- header -------
+    # With a text brand, the headline sits top-left; with a letterhead, the
+    # image strip is the header, so only the report label + date appear here.
+    left_cell = Paragraph(brand, brand_style) if brand else Paragraph("", brand_style)
     head = Table(
-        [[Paragraph(brand, brand_style),
+        [[left_cell,
           [Paragraph("NEET PREDICTION REPORT", rpt), Paragraph(now, rdate)]]],
         colWidths=[115 * mm, 67 * mm],
     )
@@ -345,6 +355,11 @@ def _build_branded_pdf(
         *row_styles,
     ]))
     story.append(tbl)
+
+    if letterhead:
+        from app.services.letterhead import make_letterhead_canvas
+        doc.build(story, canvasmaker=make_letterhead_canvas(letterhead))
+        return buf.getvalue()
 
     def _pg(canvas, d):
         canvas.saveState()
