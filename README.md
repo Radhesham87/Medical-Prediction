@@ -450,3 +450,12 @@ only, so later pages keep their full height.)
 - The last-page footer now has a dark phone bar under the Latur address strip:
   **9607801212** in large type, with 9370736973 and 9607901212 smaller beside it,
   with a phone icon — matching the supplied design.
+
+## v17.2 — Pages filled edge to edge
+
+Letterhead PDFs no longer reserve the footer band on every page: the bottom margin
+is small everywhere and the footer's space is guaranteed only on the last page
+(where the address/phone strip actually prints). The Bright Future header is also
+drawn as a page-1 element now, so later pages start at the top. Result: each page
+is filled with content (rows reach ~91% of the page height) and reports need fewer
+pages, with the same content and the same header/watermark/footer placement.

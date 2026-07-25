@@ -12,6 +12,7 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 
 _BRIGHTFUTURE_LETTERHEAD = {
     "header_path": str(ASSETS_DIR / "brightfuture_header.jpg"),
+    "header_as_flowable": True,
     "footer_path": str(ASSETS_DIR / "brightfuture_footer.jpg"),
     "header_h_mm": 26.1,
     "footer_h_mm": 42.6,

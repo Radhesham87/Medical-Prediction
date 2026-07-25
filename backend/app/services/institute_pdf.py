@@ -80,7 +80,7 @@ def build_institute_pdf(
             top_margin = 12 * mm
         else:
             top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
-        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
+        bottom_margin = 20 * mm  # footer space is reserved only on the last page (trailing spacer)
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         leftMargin=15 * mm, rightMargin=15 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
@@ -160,6 +160,7 @@ def build_institute_pdf(
         if letterhead:
             from app.services.letterhead import make_letterhead_canvas, watermark_onpage
             wm = watermark_onpage(letterhead)
+            story.append(Spacer(1, max(0.0, float(letterhead.get("footer_h_mm", 0)) - 8) * mm))
             doc.build(story, onFirstPage=wm, onLaterPages=wm,
                       canvasmaker=make_letterhead_canvas(letterhead))
         else:
@@ -220,6 +221,7 @@ def build_institute_pdf(
     if letterhead:
         from app.services.letterhead import make_letterhead_canvas, watermark_onpage
         wm = watermark_onpage(letterhead)
+        story.append(Spacer(1, max(0.0, float(letterhead.get("footer_h_mm", 0)) - 8) * mm))
         doc.build(story, onFirstPage=wm, onLaterPages=wm,
                   canvasmaker=make_letterhead_canvas(letterhead))
     else:
@@ -259,7 +261,7 @@ def _build_branded_institute_pdf(
             top_margin = 12 * mm
         else:
             top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
-        bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
+        bottom_margin = 20 * mm  # footer space is reserved only on the last page (trailing spacer)
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         leftMargin=14 * mm, rightMargin=14 * mm, topMargin=top_margin, bottomMargin=bottom_margin,
@@ -426,6 +428,7 @@ def _build_branded_institute_pdf(
     if letterhead:
         from app.services.letterhead import make_letterhead_canvas, watermark_onpage
         wm = watermark_onpage(letterhead)
+        story.append(Spacer(1, max(0.0, float(letterhead.get("footer_h_mm", 0)) - 8) * mm))
         doc.build(story, onFirstPage=wm, onLaterPages=wm,
                   canvasmaker=make_letterhead_canvas(letterhead))
         return buf.getvalue()
