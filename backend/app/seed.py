@@ -32,6 +32,39 @@ LETTERHEAD_USER_EMAIL = "jadhavs785@gmail.com"
 LETTERHEAD_USER_PASSWORD = "Bright2026"
 LETTERHEAD_USER_NAME = "Bright Future Education Group"
 
+# Fixed counselling account for Aspire Career Counselling Center (branded PDFs).
+ASPIRE_USER_EMAIL = "aspirecareer1212@gmail.com"
+ASPIRE_USER_PASSWORD = "Aspire@1212"
+ASPIRE_USER_NAME = "Aspire Career Counselling Center"
+
+
+def _ensure_aspire_user(db) -> None:
+    u = (
+        db.query(User)
+        .filter(func.lower(User.email) == ASPIRE_USER_EMAIL)
+        .one_or_none()
+    )
+    if u is None:
+        u = User(
+            name=ASPIRE_USER_NAME,
+            email=ASPIRE_USER_EMAIL,
+            mobile="0000000000",
+            hashed_password=hash_password(ASPIRE_USER_PASSWORD),
+            role=Role.USER,
+            status=Status.APPROVED,
+            is_active=True,
+        )
+        db.add(u)
+        logger.info("Seeded Aspire user: %s", ASPIRE_USER_EMAIL)
+    if not verify_password(ASPIRE_USER_PASSWORD, u.hashed_password):
+        u.hashed_password = hash_password(ASPIRE_USER_PASSWORD)
+        logger.info("Reset Aspire user password to the configured value")
+    u.role = Role.USER
+    u.status = Status.APPROVED
+    u.is_active = True
+    db.commit()
+    _grant_all_modules(db, u)
+
 
 def _ensure_letterhead_user(db) -> None:
     u = (
@@ -220,5 +253,6 @@ def init_db() -> None:
         _ensure_shared_user(db)
         _ensure_branded_user(db)
         _ensure_letterhead_user(db)
+        _ensure_aspire_user(db)
     finally:
         db.close()

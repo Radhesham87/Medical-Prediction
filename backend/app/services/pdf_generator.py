@@ -70,7 +70,10 @@ def build_prediction_pdf(
     top_margin = 18 * mm
     bottom_margin = 20 * mm
     if letterhead:
-        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        if letterhead.get("header_as_flowable"):
+            top_margin = 12 * mm
+        else:
+            top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
         bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
@@ -198,7 +201,10 @@ def _build_branded_pdf(
     top_margin = 14 * mm
     bottom_margin = 20 * mm
     if letterhead:
-        top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
+        if letterhead.get("header_as_flowable"):
+            top_margin = 12 * mm
+        else:
+            top_margin = (10 + float(letterhead.get("header_h_mm", 0))) * mm
         bottom_margin = (12 + float(letterhead.get("footer_h_mm", 0))) * mm
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
@@ -234,6 +240,11 @@ def _build_branded_pdf(
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
     ]))
     story = [head, Spacer(1, 5), HRFlowable(width="100%", thickness=2, color=BLUE), Spacer(1, 10)]
+    if letterhead and letterhead.get("header_as_flowable") and letterhead.get("header_path"):
+        from reportlab.platypus import Image as RLImage
+        hh = float(letterhead.get("header_h_mm", 0)) * mm
+        banner = RLImage(letterhead["header_path"], width=182 * mm, height=hh)
+        story = [banner, Spacer(1, 8)] + story
 
     # ------- student card (Name / Degree / input / Category+Gender) -------
     if mode == "score":

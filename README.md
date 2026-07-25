@@ -426,3 +426,19 @@ Moderate / Low meanings are unchanged.
 
 The Degree choice on Maharashtra (85%) now offers only the six degrees
 (MBBS, BDS, BAMS, BHMS, BUMS, BPTH) — one must be selected; there is no "All" option.
+
+## Aspire Career Counselling Center account (v17)
+
+A fourth branded account is seeded: `aspirecareer1212@gmail.com` · Password: `Aspire@1212`
+(approved, all modules ON, credentials enforced at startup). Its PDF downloads carry
+the Aspire branding across all five modules with the counselling-report body:
+
+- **Headline**: the Aspire banner (Director + ASPIRE Career Counselling Center +
+  streams strip) at the top of the first page.
+- **Watermark**: the Aspire logo, pre-faded ~10%, centered behind the content of
+  every page.
+- **Footer**: the Latur address strip at the bottom of the last page.
+
+Assets in `backend/app/assets/aspire_*.jpg`; mapping in `backend/app/core/branding.py`.
+All other accounts unchanged. (The banner is drawn as the first element of page 1
+only, so later pages keep their full height.)

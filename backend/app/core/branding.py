@@ -19,6 +19,18 @@ _BRIGHTFUTURE_LETTERHEAD = {
     "counselling_layout": True,
 }
 
+_ASPIRE_LETTERHEAD = {
+    "header_path": str(ASSETS_DIR / "aspire_header.jpg"),
+    "header_h_mm": 78.4,
+    "header_as_flowable": True,  # drawn as the first element of page 1 only
+    "footer_path": str(ASSETS_DIR / "aspire_footer.jpg"),
+    "footer_h_mm": 53.7,
+    "watermark_path": str(ASSETS_DIR / "aspire_watermark.jpg"),
+    "watermark_w_mm": 105,
+    "footer_text": "Generated via Aspire Career Counselling Center",
+    "counselling_layout": True,
+}
+
 BRANDED_PDF_USERS = {
     "radheshamtaynath8@gmail.com": {
         "headline": "DR SHINDE EDUCATION SERVICES PVT LTD Latur",
@@ -35,6 +47,11 @@ BRANDED_PDF_USERS = {
             "watermark_path": str(ASSETS_DIR / "brightfuture_watermark.jpg"),
             "watermark_w_mm": 110,
         },
+    },
+    # Aspire Career Counselling Center: banner header on page 1, logo watermark
+    # on every page, Latur address strip on the last page.
+    "aspirecareer1212@gmail.com": {
+        "letterhead": _ASPIRE_LETTERHEAD,
     },
 }
 

@@ -33,6 +33,7 @@ def make_letterhead_canvas(letterhead: dict):
     header_h = float(letterhead.get("header_h_mm", 0)) * mm
     footer_h = float(letterhead.get("footer_h_mm", 0)) * mm
     footer_text = letterhead.get("footer_text", "")
+    header_as_flowable = bool(letterhead.get("header_as_flowable"))
 
     class LetterheadCanvas(_canvas.Canvas):
         def __init__(self, *args, **kwargs):
@@ -48,7 +49,7 @@ def make_letterhead_canvas(letterhead: dict):
             W, H = A4
             for i, state in enumerate(self._saved_pages, start=1):
                 self.__dict__.update(state)
-                if i == 1 and header_path and header_h:
+                if i == 1 and header_path and header_h and not header_as_flowable:
                     self.drawImage(
                         header_path, 14 * mm, H - 6 * mm - header_h,
                         width=W - 28 * mm, height=header_h,
