@@ -33,6 +33,19 @@ _ASPIRE_LETTERHEAD = {
     "counselling_layout": True,
 }
 
+_GROVY_LETTERHEAD = {
+    "header_path": str(ASSETS_DIR / "grovy_header.jpg"),
+    "header_w_mm": 182,
+    "header_h_mm": 46.8,
+    "header_as_flowable": True,
+    "footer_path": str(ASSETS_DIR / "grovy_footer.jpg"),
+    "footer_h_mm": 24.3,
+    "watermark_path": str(ASSETS_DIR / "grovy_watermark.jpg"),
+    "watermark_w_mm": 105,
+    "footer_text": "Generated via Grovy Education Consultant",
+    "counselling_layout": True,
+}
+
 BRANDED_PDF_USERS = {
     "radheshamtaynath8@gmail.com": {
         "headline": "DR SHINDE EDUCATION SERVICES PVT LTD Latur",
@@ -54,6 +67,11 @@ BRANDED_PDF_USERS = {
     # on every page, Latur address strip on the last page.
     "aspirecareer1212@gmail.com": {
         "letterhead": _ASPIRE_LETTERHEAD,
+    },
+    # Grovy Education Consultant, Nanded: logo banner headline, circular-mark
+    # watermark, address/phone footer bar on the last page.
+    "gncnanded@gmail.com": {
+        "letterhead": _GROVY_LETTERHEAD,
     },
 }
 

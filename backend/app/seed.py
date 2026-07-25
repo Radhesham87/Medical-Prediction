@@ -37,6 +37,39 @@ ASPIRE_USER_EMAIL = "aspirecareer1212@gmail.com"
 ASPIRE_USER_PASSWORD = "Aspire@1212"
 ASPIRE_USER_NAME = "Aspire Career Counselling Center"
 
+# Fixed counselling account for Grovy Education Consultant, Nanded (branded PDFs).
+GROVY_USER_EMAIL = "gncnanded@gmail.com"
+GROVY_USER_PASSWORD = "Pass@1234"
+GROVY_USER_NAME = "Grovy Education Consultant"
+
+
+def _ensure_grovy_user(db) -> None:
+    u = (
+        db.query(User)
+        .filter(func.lower(User.email) == GROVY_USER_EMAIL)
+        .one_or_none()
+    )
+    if u is None:
+        u = User(
+            name=GROVY_USER_NAME,
+            email=GROVY_USER_EMAIL,
+            mobile="0000000000",
+            hashed_password=hash_password(GROVY_USER_PASSWORD),
+            role=Role.USER,
+            status=Status.APPROVED,
+            is_active=True,
+        )
+        db.add(u)
+        logger.info("Seeded Grovy user: %s", GROVY_USER_EMAIL)
+    if not verify_password(GROVY_USER_PASSWORD, u.hashed_password):
+        u.hashed_password = hash_password(GROVY_USER_PASSWORD)
+        logger.info("Reset Grovy user password to the configured value")
+    u.role = Role.USER
+    u.status = Status.APPROVED
+    u.is_active = True
+    db.commit()
+    _grant_all_modules(db, u)
+
 
 def _ensure_aspire_user(db) -> None:
     u = (
@@ -254,5 +287,6 @@ def init_db() -> None:
         _ensure_branded_user(db)
         _ensure_letterhead_user(db)
         _ensure_aspire_user(db)
+        _ensure_grovy_user(db)
     finally:
         db.close()

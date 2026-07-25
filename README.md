@@ -465,3 +465,16 @@ pages, with the same content and the same header/watermark/footer placement.
 The Aspire banner on page 1 now spans the full content width (182mm, margin to
 margin) — no empty side spaces. Its height follows the image's own proportions
 (~77mm); all pages below remain filled edge to edge.
+
+## Grovy Education Consultant account (v18)
+
+A fifth branded account is seeded: `gncnanded@gmail.com` · Password: `Pass@1234`
+(approved, all modules ON, credentials enforced at startup). Its PDFs carry the
+GROVY branding across all five modules with the counselling-report body:
+
+- **Headline**: the GROVY Education Consultant banner, full content width, top of page 1.
+- **Watermark**: the circular GROVY mark, pre-faded ~10%, behind every page.
+- **Footer** (last page): a charcoal bar with an orange accent —
+  "Patil Complex, Bhagya Nagar T Point, Nanded" and "☎ 9921770747 / 8379069919".
+
+Assets in `backend/app/assets/grovy_*.jpg`; mapping in `backend/app/core/branding.py`.
