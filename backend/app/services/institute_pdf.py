@@ -293,7 +293,9 @@ def _build_branded_institute_pdf(
     if letterhead and letterhead.get("header_as_flowable") and letterhead.get("header_path"):
         from reportlab.platypus import Image as RLImage
         hh = float(letterhead.get("header_h_mm", 0)) * mm
-        banner = RLImage(letterhead["header_path"], width=182 * mm, height=hh)
+        hw = float(letterhead.get("header_w_mm", 182)) * mm
+        banner = RLImage(letterhead["header_path"], width=hw, height=hh)
+        banner.hAlign = "CENTER"
         story = [banner, Spacer(1, 8)] + story
 
     # ------- student card -------

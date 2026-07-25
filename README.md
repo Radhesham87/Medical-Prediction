@@ -442,3 +442,11 @@ the Aspire branding across all five modules with the counselling-report body:
 Assets in `backend/app/assets/aspire_*.jpg`; mapping in `backend/app/core/branding.py`.
 All other accounts unchanged. (The banner is drawn as the first element of page 1
 only, so later pages keep their full height.)
+
+## v17.1 — Aspire banner reduced + phone numbers in footer
+
+- The Aspire banner headline on page 1 is smaller (112mm wide, centered) so it no
+  longer dominates the page.
+- The last-page footer now has a dark phone bar under the Latur address strip:
+  **9607801212** in large type, with 9370736973 and 9607901212 smaller beside it,
+  with a phone icon — matching the supplied design.
