@@ -459,3 +459,9 @@ is small everywhere and the footer's space is guaranteed only on the last page
 drawn as a page-1 element now, so later pages start at the top. Result: each page
 is filled with content (rows reach ~91% of the page height) and reports need fewer
 pages, with the same content and the same header/watermark/footer placement.
+
+## v17.3 — Aspire banner full width
+
+The Aspire banner on page 1 now spans the full content width (182mm, margin to
+margin) — no empty side spaces. Its height follows the image's own proportions
+(~77mm); all pages below remain filled edge to edge.

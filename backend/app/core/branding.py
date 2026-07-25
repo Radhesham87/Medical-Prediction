@@ -22,8 +22,8 @@ _BRIGHTFUTURE_LETTERHEAD = {
 
 _ASPIRE_LETTERHEAD = {
     "header_path": str(ASSETS_DIR / "aspire_header.jpg"),
-    "header_w_mm": 112,
-    "header_h_mm": 48.3,
+    "header_w_mm": 182,
+    "header_h_mm": 77.4,
     "header_as_flowable": True,  # drawn as the first element of page 1 only
     "footer_path": str(ASSETS_DIR / "aspire_footer.jpg"),
     "footer_h_mm": 58,  # letterboxed: address strip + phone bar, centered
