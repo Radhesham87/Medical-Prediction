@@ -42,7 +42,7 @@ def stats(db: Session = Depends(get_db)):
     # AIIMS / All India / Deemed: counted from usage events.
     inst_total: dict[str, int] = {}
     inst_today: dict[str, int] = {}
-    for key in ("aiims", "all-india", "deemed", "veterinary"):
+    for key in ("aiims", "all-india", "deemed", "veterinary", "mbbs-other-state"):
         base = db.query(func.count(PredictionUsage.id)).filter(
             PredictionUsage.module == key, PredictionUsage.kind == "predict"
         )
@@ -63,6 +63,7 @@ def stats(db: Session = Depends(get_db)):
         "maharashtra": mah_today,
         "deemed": inst_today["deemed"],
         "veterinary": inst_today["veterinary"],
+        "mbbs-other-state": inst_today["mbbs-other-state"],
     }
 
     return AdminStats(
@@ -93,7 +94,7 @@ def _get_user(db: Session, user_id: int) -> User:
     return user
 
 
-_MODULE_KEYS = ["aiims", "all-india", "maharashtra", "deemed", "veterinary"]
+_MODULE_KEYS = ["aiims", "all-india", "maharashtra", "deemed", "veterinary", "mbbs-other-state"]
 
 
 def _usage_counts(db: Session, u: User) -> dict:
@@ -121,6 +122,7 @@ def _serialize_user(db: Session, u: User) -> dict:
         "maharashtra": bool(access and access.maharashtra),
         "deemed": bool(access and access.deemed),
         "veterinary": bool(access and getattr(access, "veterinary", False)),
+        "mbbs-other-state": bool(access and getattr(access, "mbbs_other_state", False)),
     }
     usage = _usage_counts(db, u)
     return {
@@ -146,6 +148,7 @@ def set_modules(user_id: int, payload: ModuleAccessIn, db: Session = Depends(get
     access.maharashtra = payload.maharashtra
     access.deemed = payload.deemed
     access.veterinary = payload.veterinary
+    access.mbbs_other_state = payload.mbbs_other_state
     db.commit()
     return _serialize_user(db, user)
 
@@ -156,6 +159,7 @@ _ACCESS_FIELD = {
     "maharashtra": "maharashtra",
     "deemed": "deemed",
     "veterinary": "veterinary",
+    "mbbs-other-state": "mbbs_other_state",
 }
 
 _MODULE_TITLES = {
@@ -164,6 +168,7 @@ _MODULE_TITLES = {
     "maharashtra": "Maharashtra (85%)",
     "deemed": "Deemed",
     "veterinary": "Veterinary",
+    "mbbs-other-state": "MBBS in Other State",
 }
 
 

@@ -12,6 +12,7 @@ MODULE_FIELDS = {
     "maharashtra": "maharashtra",
     "deemed": "deemed",
     "veterinary": "veterinary",
+    "mbbs-other-state": "mbbs_other_state",
 }
 
 MODULE_LABELS = {
@@ -20,6 +21,7 @@ MODULE_LABELS = {
     "maharashtra": "Maharashtra (85%)",
     "deemed": "Deemed",
     "veterinary": "Veterinary",
+    "mbbs-other-state": "MBBS in Other State",
 }
 
 

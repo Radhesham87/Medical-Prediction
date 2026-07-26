@@ -29,6 +29,7 @@ MODULE_TITLES = {
     "all-india": "All India (15%)",
     "deemed": "Deemed",
     "veterinary": "Veterinary",
+    "mbbs-other-state": "MBBS in Other State",
 }
 
 

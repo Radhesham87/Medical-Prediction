@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Globe2, MapPin, GraduationCap, ArrowRight, ClipboardList, Sparkles, FileDown, PawPrint } from "lucide-react";
+import { Building2, Globe2, MapPin, GraduationCap, ArrowRight, ClipboardList, Sparkles, FileDown, PawPrint, Landmark } from "lucide-react";
 
 const MODULES = [
   {
@@ -25,6 +25,12 @@ const MODULES = [
     icon: PawPrint,
     title: "Veterinary",
     desc: "B.V.Sc & A.H veterinary colleges — predict by marks or rank, filter by category and state.",
+  },
+  {
+    href: "/mbbs-other-state",
+    icon: Landmark,
+    title: "MBBS in Other State",
+    desc: "State-quota MBBS colleges in other states — predict by marks or AIR, filter by state.",
   },
   {
     href: "/deemed",
@@ -53,7 +59,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((m) => (
           <Link key={m.href} href={m.href} className="card group p-6 transition hover:border-brand-500 hover:shadow-md">
             <m.icon className="h-9 w-9 text-brand-600" />

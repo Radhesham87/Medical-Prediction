@@ -56,12 +56,12 @@ export default function AdminPage() {
 
   const moduleUsage = users.reduce(
     (acc, u) => {
-      for (const k of ["aiims", "all-india", "maharashtra", "deemed", "veterinary"]) {
+      for (const k of ["aiims", "all-india", "maharashtra", "deemed", "veterinary", "mbbs-other-state"]) {
         acc[k] = (acc[k] ?? 0) + (u.usage?.[k] ?? 0);
       }
       return acc;
     },
-    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0, veterinary: 0 } as Record<string, number>
+    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0, veterinary: 0, "mbbs-other-state": 0 } as Record<string, number>
   );
 
   return (
@@ -85,13 +85,14 @@ export default function AdminPage() {
           <p className="mb-3 text-sm font-semibold text-slate-500">
             Today&apos;s Predictions by Module
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {[
               { key: "aiims", label: "AIIMS" },
               { key: "all-india", label: "All India (15%)" },
               { key: "maharashtra", label: "Maharashtra (85%)" },
               { key: "deemed", label: "Deemed" },
               { key: "veterinary", label: "Veterinary" },
+              { key: "mbbs-other-state", label: "MBBS in Other State" },
             ].map((m) => (
               <div
                 key={m.key}
@@ -117,6 +118,7 @@ export default function AdminPage() {
               { label: "Maharashtra", value: moduleUsage["maharashtra"], color: "#0891b2" },
               { label: "Deemed", value: moduleUsage["deemed"], color: "#059669" },
               { label: "Veterinary", value: moduleUsage["veterinary"], color: "#db2777" },
+              { label: "MBBS Other State", value: moduleUsage["mbbs-other-state"], color: "#7c3aed" },
             ]}
           />
           <Donut
@@ -317,6 +319,7 @@ const MODULE_META: { key: string; label: string }[] = [
   { key: "maharashtra", label: "Maharashtra (85%)" },
   { key: "deemed", label: "Deemed" },
   { key: "veterinary", label: "Veterinary" },
+  { key: "mbbs-other-state", label: "MBBS in Other State" },
 ];
 
 function ModulesModal({
@@ -334,6 +337,7 @@ function ModulesModal({
     maharashtra: !!user.modules?.["maharashtra"],
     deemed: !!user.modules?.["deemed"],
     veterinary: !!user.modules?.["veterinary"],
+    mbbs_other_state: !!user.modules?.["mbbs-other-state"],
   });
   const [busy, setBusy] = useState(false);
 
@@ -343,6 +347,7 @@ function ModulesModal({
     maharashtra: "maharashtra",
     deemed: "deemed",
     veterinary: "veterinary",
+    "mbbs-other-state": "mbbs_other_state",
   };
 
   const save = async () => {

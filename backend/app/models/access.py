@@ -28,6 +28,7 @@ class ModuleAccess(Base):
     maharashtra: Mapped[bool] = mapped_column(Boolean, default=False)
     deemed: Mapped[bool] = mapped_column(Boolean, default=False)
     veterinary: Mapped[bool] = mapped_column(Boolean, default=False)
+    mbbs_other_state: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user = relationship("User", back_populates="module_access")
 

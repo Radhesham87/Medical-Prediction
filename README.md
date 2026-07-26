@@ -478,3 +478,17 @@ GROVY branding across all five modules with the counselling-report body:
   "Patil Complex, Bhagya Nagar T Point, Nanded" and "☎ 9921770747 / 8379069919".
 
 Assets in `backend/app/assets/grovy_*.jpg`; mapping in `backend/app/core/branding.py`.
+
+## MBBS in Other State module (v19)
+
+Sixth predictor: **MBBS in Other State** — landing-page card + `/mbbs-other-state`.
+- Data: `data/MBBS_IN_OTHER_STATE.xlsx` (sheet "MBBS Cutoff 2025"; 136 usable colleges
+  across 7 states — 21 source rows without AIR/Marks were dropped).
+- Flow: Name → Marks or AIR → State (dropdown with "All states" plus single states).
+  No degree/category filters (dataset is MBBS-only, no category column).
+- All matching colleges are shown (out-of-reach labelled Low); PDFs use the standard
+  or branded counselling formats like the other institute modules.
+- Per-module approval applies: new users need the admin to tick "MBBS in Other State"
+  (existing databases get the permission column added automatically; the six fixed
+  accounts get it ON). Appears in Modules dashboards, today's breakdown, usage chart,
+  and PREDS totals.

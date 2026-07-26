@@ -119,6 +119,13 @@ MODULES: Dict[str, ModuleConfig] = {
         col_air="Gen Rank", col_score="Gen Score", col_degree="Degree",
         degrees=["MBBS", "BDS"],
     ),
+    "mbbs-other-state": ModuleConfig(
+        key="mbbs-other-state", label="MBBS in Other State",
+        filename="MBBS_IN_OTHER_STATE.xlsx", sheet="MBBS Cutoff 2025",
+        col_institute="College Name", col_state="State",
+        col_air="AIR 2025", col_score="Marks",
+        degrees=[],
+    ),
     "veterinary": ModuleConfig(
         key="veterinary", label="Veterinary",
         filename="Veterinary_Cutoff.xlsx", sheet="Round 3 Cutoff",

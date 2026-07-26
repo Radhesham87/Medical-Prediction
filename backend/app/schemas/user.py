@@ -72,6 +72,7 @@ class ModuleAccessIn(BaseModel):
     maharashtra: bool = False
     deemed: bool = False
     veterinary: bool = False
+    mbbs_other_state: bool = False
 
 
 class DeviceOut(BaseModel):
