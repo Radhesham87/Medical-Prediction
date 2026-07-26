@@ -492,3 +492,15 @@ Sixth predictor: **MBBS in Other State** — landing-page card + `/mbbs-other-st
   (existing databases get the permission column added automatically; the six fixed
   accounts get it ON). Appears in Modules dashboards, today's breakdown, usage chart,
   and PREDS totals.
+
+## Dataset refresh (v20)
+
+- **All India (15%)**: replaced with `All_India_MBBS_Cutoff_2025.xlsx` (2,410 rows;
+  2,116 usable after the standard validity filter — 294 rows lack AIR/Score or have
+  out-of-range values). Columns mapped to the app's shape (Institute Name / State
+  Name); MBBS + BDS, 5 categories, 34 states.
+- **MBBS in Other State**: replaced with the updated sheet — 126 usable colleges
+  across 6 states (18 source rows without AIR/Marks dropped; Madhya Pradesh no
+  longer appears in the new data).
+
+No code changes; the same filters, dashboards, and PDFs run on the new cutoffs.
