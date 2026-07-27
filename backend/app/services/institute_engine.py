@@ -126,6 +126,13 @@ MODULES: Dict[str, ModuleConfig] = {
         col_air="AIR 2025", col_score="Marks",
         degrees=[],
     ),
+    "bams-other-state": ModuleConfig(
+        key="bams-other-state", label="BAMS in Other State",
+        filename="BAMS_IN_OTHER_STATE.xlsx", sheet="BAMS College List",
+        col_institute="College Name", col_state="State",
+        col_air="AIR 2025", col_score="Marks",
+        degrees=[],
+    ),
     "veterinary": ModuleConfig(
         key="veterinary", label="Veterinary",
         filename="Veterinary_Cutoff.xlsx", sheet="Round 3 Cutoff",

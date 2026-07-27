@@ -56,12 +56,12 @@ export default function AdminPage() {
 
   const moduleUsage = users.reduce(
     (acc, u) => {
-      for (const k of ["aiims", "all-india", "maharashtra", "deemed", "veterinary", "mbbs-other-state"]) {
+      for (const k of ["aiims", "all-india", "maharashtra", "deemed", "veterinary", "mbbs-other-state", "bams-other-state"]) {
         acc[k] = (acc[k] ?? 0) + (u.usage?.[k] ?? 0);
       }
       return acc;
     },
-    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0, veterinary: 0, "mbbs-other-state": 0 } as Record<string, number>
+    { aiims: 0, "all-india": 0, maharashtra: 0, deemed: 0, veterinary: 0, "mbbs-other-state": 0, "bams-other-state": 0 } as Record<string, number>
   );
 
   return (
@@ -93,6 +93,7 @@ export default function AdminPage() {
               { key: "deemed", label: "Deemed" },
               { key: "veterinary", label: "Veterinary" },
               { key: "mbbs-other-state", label: "MBBS in Other State" },
+              { key: "bams-other-state", label: "BAMS in Other State" },
             ].map((m) => (
               <div
                 key={m.key}
@@ -119,6 +120,7 @@ export default function AdminPage() {
               { label: "Deemed", value: moduleUsage["deemed"], color: "#059669" },
               { label: "Veterinary", value: moduleUsage["veterinary"], color: "#db2777" },
               { label: "MBBS Other State", value: moduleUsage["mbbs-other-state"], color: "#7c3aed" },
+              { label: "BAMS Other State", value: moduleUsage["bams-other-state"], color: "#16a34a" },
             ]}
           />
           <Donut
@@ -320,6 +322,7 @@ const MODULE_META: { key: string; label: string }[] = [
   { key: "deemed", label: "Deemed" },
   { key: "veterinary", label: "Veterinary" },
   { key: "mbbs-other-state", label: "MBBS in Other State" },
+  { key: "bams-other-state", label: "BAMS in Other State" },
 ];
 
 function ModulesModal({
@@ -338,6 +341,7 @@ function ModulesModal({
     deemed: !!user.modules?.["deemed"],
     veterinary: !!user.modules?.["veterinary"],
     mbbs_other_state: !!user.modules?.["mbbs-other-state"],
+    bams_other_state: !!user.modules?.["bams-other-state"],
   });
   const [busy, setBusy] = useState(false);
 
@@ -348,6 +352,7 @@ function ModulesModal({
     deemed: "deemed",
     veterinary: "veterinary",
     "mbbs-other-state": "mbbs_other_state",
+    "bams-other-state": "bams_other_state",
   };
 
   const save = async () => {

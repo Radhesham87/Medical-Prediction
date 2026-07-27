@@ -13,6 +13,7 @@ MODULE_FIELDS = {
     "deemed": "deemed",
     "veterinary": "veterinary",
     "mbbs-other-state": "mbbs_other_state",
+    "bams-other-state": "bams_other_state",
 }
 
 MODULE_LABELS = {
@@ -22,6 +23,7 @@ MODULE_LABELS = {
     "deemed": "Deemed",
     "veterinary": "Veterinary",
     "mbbs-other-state": "MBBS in Other State",
+    "bams-other-state": "BAMS in Other State",
 }
 
 

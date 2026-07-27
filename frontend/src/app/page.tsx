@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Globe2, MapPin, GraduationCap, ArrowRight, ClipboardList, Sparkles, FileDown, PawPrint, Landmark } from "lucide-react";
+import { Building2, Globe2, MapPin, GraduationCap, ArrowRight, ClipboardList, Sparkles, FileDown, PawPrint, Landmark, Leaf } from "lucide-react";
 
 const MODULES = [
   {
@@ -37,6 +37,12 @@ const MODULES = [
     icon: GraduationCap,
     title: "Deemed",
     desc: "Deemed MBBS & BDS institutes — filter by degree and state.",
+  },
+  {
+    href: "/bams-other-state",
+    icon: Leaf,
+    title: "BAMS in Other State",
+    desc: "State-quota BAMS colleges in other states — predict by marks or AIR, filter by state.",
   },
 ];
 

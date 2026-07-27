@@ -73,6 +73,7 @@ class ModuleAccessIn(BaseModel):
     deemed: bool = False
     veterinary: bool = False
     mbbs_other_state: bool = False
+    bams_other_state: bool = False
 
 
 class DeviceOut(BaseModel):

@@ -30,6 +30,7 @@ MODULE_TITLES = {
     "deemed": "Deemed",
     "veterinary": "Veterinary",
     "mbbs-other-state": "MBBS in Other State",
+    "bams-other-state": "BAMS in Other State",
 }
 
 

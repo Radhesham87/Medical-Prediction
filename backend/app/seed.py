@@ -260,6 +260,21 @@ def _migrate_add_mbbs_other_state_access() -> None:
     logger.info("Migrated: added module_access.mbbs_other_state column")
 
 
+def _migrate_add_bams_other_state_access() -> None:
+    """Add module_access.bams_other_state on existing databases (idempotent)."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "module_access" not in insp.get_table_names():
+        return
+    cols = {c["name"] for c in insp.get_columns("module_access")}
+    if "bams_other_state" in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE module_access ADD COLUMN bams_other_state BOOLEAN DEFAULT FALSE"))
+    logger.info("Migrated: added module_access.bams_other_state column")
+
+
 def _grant_all_modules(db, user: User) -> None:
     access = db.get(ModuleAccess, user.id)
     if access is None:
@@ -271,6 +286,7 @@ def _grant_all_modules(db, user: User) -> None:
     access.deemed = True
     access.veterinary = True
     access.mbbs_other_state = True
+    access.bams_other_state = True
     db.commit()
 
 
@@ -280,6 +296,7 @@ def init_db() -> None:
     _migrate_add_usage_kind()
     _migrate_add_veterinary_access()
     _migrate_add_mbbs_other_state_access()
+    _migrate_add_bams_other_state_access()
     db = SessionLocal()
     try:
         admin = db.execute(select(User).where(User.role == Role.ADMIN)).scalar_one_or_none()
