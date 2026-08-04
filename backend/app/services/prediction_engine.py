@@ -30,8 +30,17 @@ CATEGORY_MAP = {
     "OPEN": "OPEN", "OBC": "OBC", "SEBC": "SEBC", "EWS": "EWS", "VJA": "VJA",
     "NTB": "NTB", "NTC": "NTC", "NTD": "NTD", "SC": "SC", "ST": "ST",
     "D1": "D1", "D2": "D2", "D3": "D3",
+    # PWD (Persons with Disability) variants
+    "OPEN-PWD": "OPEN-PWD", "OBC-PWD": "OBC-PWD", "SEBC-PWD": "SEBC-PWD",
+    "VJA-PWD": "VJA-PWD", "SC-PWD": "SC-PWD", "ST-PWD": "ST-PWD",
+    "EWS-PWD": "EWS-PWD", "NTB-PWD": "NTB-PWD", "NTC-PWD": "NTC-PWD", "NTD-PWD": "NTD-PWD",
+    # HA variants
+    "OPEN-HA": "OPEN-HA", "OBC-HA": "OBC-HA", "SEBC-HA": "SEBC-HA",
+    "VJA-HA": "VJA-HA", "SC-HA": "SC-HA", "ST-HA": "ST-HA",
+    "EWS-HA": "EWS-HA", "NTB-HA": "NTB-HA", "NTC-HA": "NTC-HA", "NTD-HA": "NTD-HA",
 }
 GENDER_MAP = {"Male": "M", "Female": "F"}
+COLLEGE_TYPES = {"Government", "Private"}
 ALL_DEGREES = ["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"]
 
 # Score-based bands (points relative to cutoff).
@@ -142,6 +151,7 @@ def predict(
     degrees: List[str],
     gender: str,
     category: str,
+    college_type: Optional[str] = None,
 ) -> List[dict]:
     """Return a list of probable-college dicts sorted High -> Moderate -> Low."""
     df = dataset.load()
@@ -154,6 +164,11 @@ def predict(
         return []
 
     subset = df[(df["Degree"].isin(wanted)) & (df["cat"] == cat) & (df["gen"] == gen)].copy()
+
+    # Optional College Type filter (Government / Private). "Any"/None/"" = no filter.
+    if college_type and college_type.strip().title() in COLLEGE_TYPES:
+        subset = subset[subset["College Status"].astype(str).str.strip().str.title() == college_type.strip().title()]
+
     if subset.empty:
         return []
 

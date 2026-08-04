@@ -8,7 +8,7 @@ import { api, type PredictPayload } from "@/lib/api";
 import { getRole, isAuthenticated } from "@/lib/auth";
 import { Spinner } from "@/components/loading";
 import { PredictionTable } from "@/components/prediction-table";
-import { CATEGORIES, DEGREES, type PredictionResponse } from "@/types";
+import { CATEGORIES, COLLEGE_TYPES, DEGREES, type PredictionResponse } from "@/types";
 
 const EMPTY = {
   student_name: "",
@@ -19,6 +19,7 @@ const EMPTY = {
   degree: "",
   gender: "Male" as "Male" | "Female",
   category: "OPEN",
+  college_type: "Any" as "Any" | "Government" | "Private",
 };
 
 export default function PredictPage() {
@@ -55,6 +56,7 @@ export default function PredictPage() {
       degrees: [form.degree],
       gender: form.gender,
       category: form.category,
+      college_type: form.college_type,
       ...(form.mode === "score"
         ? { score: Number(form.score) }
         : form.mode === "air"
@@ -200,6 +202,23 @@ export default function PredictPage() {
             >
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="label">College Type</label>
+            <select
+              className="input"
+              value={form.college_type}
+              onChange={(e) =>
+                setForm({ ...form, college_type: e.target.value as "Any" | "Government" | "Private" })
+              }
+            >
+              {COLLEGE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t === "Any" ? "Any (Government + Private)" : t}
+                </option>
               ))}
             </select>
           </div>

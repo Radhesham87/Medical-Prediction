@@ -100,6 +100,14 @@ export interface HistoryItem {
 
 export const CATEGORIES = [
   "OPEN", "OBC", "SEBC", "EWS", "VJA", "NTB", "NTC", "NTD", "SC", "ST", "D1", "D2", "D3",
+  // PWD (Persons with Disability) variants
+  "OPEN-PWD", "OBC-PWD", "SEBC-PWD", "VJA-PWD", "SC-PWD", "ST-PWD",
+  "EWS-PWD", "NTB-PWD", "NTC-PWD", "NTD-PWD",
+  // HA variants
+  "OPEN-HA", "OBC-HA", "SEBC-HA", "VJA-HA", "SC-HA", "ST-HA",
+  "EWS-HA", "NTB-HA", "NTC-HA", "NTD-HA",
 ] as const;
 
 export const DEGREES = ["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"] as const;
+
+export const COLLEGE_TYPES = ["Any", "Government", "Private"] as const;
