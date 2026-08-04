@@ -6,10 +6,17 @@ from pydantic import BaseModel, Field, model_validator
 
 # Categories accepted from the UI (map cleanly onto the dataset's Quota-Gender prefixes).
 Category = Literal[
-    "OPEN", "OBC", "SEBC", "EWS", "VJA", "NTB", "NTC", "NTD", "SC", "ST", "D1", "D2", "D3"
+    "OPEN", "OBC", "SEBC", "EWS", "VJA", "NTB", "NTC", "NTD", "SC", "ST", "D1", "D2", "D3",
+    # PWD (Persons with Disability) variants
+    "OPEN-PWD", "OBC-PWD", "SEBC-PWD", "VJA-PWD", "SC-PWD", "ST-PWD",
+    "EWS-PWD", "NTB-PWD", "NTC-PWD", "NTD-PWD",
+    # HA (Hearing Handicap / similar reserved) variants
+    "OPEN-HA", "OBC-HA", "SEBC-HA", "VJA-HA", "SC-HA", "ST-HA",
+    "EWS-HA", "NTB-HA", "NTC-HA", "NTD-HA",
 ]
 Gender = Literal["Male", "Female"]
 Degree = Literal["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"]
+CollegeType = Literal["Any", "Government", "Private"]
 
 
 class PredictionRequest(BaseModel):
@@ -21,6 +28,7 @@ class PredictionRequest(BaseModel):
     degrees: List[str] = Field(min_length=1)  # "All" allowed; expanded server-side
     gender: Gender
     category: Category
+    college_type: CollegeType = "Any"
 
     @model_validator(mode="after")
     def _check_mode_value(self):
