@@ -34,7 +34,6 @@ def make_prediction(
         degrees=payload.degrees,
         gender=payload.gender,
         category=payload.category,
-        college_type=payload.college_type,
     )
     show_rank = payload.category.upper() != "OPEN"
 

@@ -141,7 +141,6 @@ export interface PredictPayload {
   degrees: string[];
   gender: "Male" | "Female";
   category: string;
-  college_type?: "Any" | "Government" | "Private";
 }
 
 export const api = {
