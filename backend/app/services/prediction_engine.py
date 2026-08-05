@@ -166,8 +166,16 @@ def predict(
     subset = df[(df["Degree"].isin(wanted)) & (df["cat"] == cat) & (df["gen"] == gen)].copy()
 
     # Optional College Type filter (Government / Private). "Any"/None/"" = no filter.
+    # College Status values include minority-status variants like
+    # "Private (Muslim Minority)" or "Government (Jain Minority)" - these must
+    # still count as Private / Government respectively, so match on the leading
+    # word rather than requiring an exact equality (which silently dropped
+    # every minority-status college, e.g. all BUMS colleges).
     if college_type and college_type.strip().title() in COLLEGE_TYPES:
-        subset = subset[subset["College Status"].astype(str).str.strip().str.title() == college_type.strip().title()]
+        wanted_type = college_type.strip().title()
+        subset = subset[
+            subset["College Status"].astype(str).str.strip().str.title().str.startswith(wanted_type)
+        ]
 
     if subset.empty:
         return []
