@@ -47,8 +47,14 @@ _GROVY_LETTERHEAD = {
 }
 
 BRANDED_PDF_USERS = {
+    # This account gets the standard DR SHINDE headline layout PLUS an
+    # extended college table: Sr. No. and College Code columns, a blank
+    # "Your Preference" column, and the Chance labels renamed to
+    # DREAM COLLEGES / TARGET COLLEGES / SAFE ZONE. No other account is
+    # affected by this variant.
     "radheshamtaynath8@gmail.com": {
         "headline": "DR SHINDE EDUCATION SERVICES PVT LTD Latur",
+        "table_variant": "extended",
     },
     "jadhavs785@gmail.com": {
         "letterhead": _BRIGHTFUTURE_LETTERHEAD,
@@ -90,3 +96,8 @@ def pdf_headline_for(email: Optional[str]) -> Optional[str]:
 def pdf_letterhead_for(email: Optional[str]) -> Optional[dict]:
     brand = pdf_brand_for(email)
     return brand.get("letterhead") if brand else None
+
+
+def pdf_table_variant_for(email: Optional[str]) -> Optional[str]:
+    brand = pdf_brand_for(email)
+    return brand.get("table_variant") if brand else None

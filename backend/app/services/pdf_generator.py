@@ -25,6 +25,15 @@ BAND_COLORS = {
     "Low": colors.HexColor("#dc2626"),
 }
 
+# Chance-label renaming used only for accounts with table_variant == "extended"
+# (see app.core.branding). Internal keys / colors stay the same; only the
+# printed text changes.
+EXTENDED_CHANCE_LABELS = {
+    "High": "SAFE ZONE",
+    "Moderate": "TARGET COLLEGES",
+    "Low": "DREAM COLLEGES",
+}
+
 
 def _footer(canvas, doc):
     canvas.saveState()
@@ -52,6 +61,7 @@ def build_prediction_pdf(
     show_category_rank: bool,
     brand_headline: Optional[str] = None,
     letterhead: Optional[dict] = None,
+    table_variant: Optional[str] = None,
 ) -> bytes:
     if brand_headline or (letterhead and letterhead.get("counselling_layout")):
         return _build_branded_pdf(
@@ -65,6 +75,7 @@ def build_prediction_pdf(
             category=category,
             results=results,
             letterhead=letterhead,
+            table_variant=table_variant,
         )
     buf = BytesIO()
     top_margin = 18 * mm
@@ -197,7 +208,10 @@ def _build_branded_pdf(
     category: str,
     results: List[dict],
     letterhead: Optional[dict] = None,
+    table_variant: Optional[str] = None,
 ) -> bytes:
+    extended = table_variant == "extended"
+    chance_label = (lambda c: EXTENDED_CHANCE_LABELS.get(c, c)) if extended else (lambda c: c)
     buf = BytesIO()
     top_margin = 14 * mm
     bottom_margin = 20 * mm
@@ -301,9 +315,12 @@ def _build_branded_pdf(
     big = lambda v, c: ParagraphStyle("b", fontName="Helvetica-Bold", fontSize=14, textColor=c, leading=16)
     small = ParagraphStyle("sm", fontName="Helvetica", fontSize=7, textColor=GREY, leading=9)
     boxes = [
-        [Paragraph(str(counts["High"]), big(counts["High"], BAND_COLORS["High"])), Paragraph("High Chance", small)],
-        [Paragraph(str(counts["Moderate"]), big(counts["Moderate"], BAND_COLORS["Moderate"])), Paragraph("Moderate Chance", small)],
-        [Paragraph(str(counts["Low"]), big(counts["Low"], BAND_COLORS["Low"])), Paragraph("Low Chance", small)],
+        [Paragraph(str(counts["High"]), big(counts["High"], BAND_COLORS["High"])),
+         Paragraph(chance_label("High") if extended else "High Chance", small)],
+        [Paragraph(str(counts["Moderate"]), big(counts["Moderate"], BAND_COLORS["Moderate"])),
+         Paragraph(chance_label("Moderate") if extended else "Moderate Chance", small)],
+        [Paragraph(str(counts["Low"]), big(counts["Low"], BAND_COLORS["Low"])),
+         Paragraph(chance_label("Low") if extended else "Low Chance", small)],
         [Paragraph(str(len(results)), big(len(results), BLUE)), Paragraph("Total Colleges", small)],
     ]
     summ = Table([boxes], colWidths=[45.5 * mm] * 4)
@@ -341,29 +358,60 @@ def _build_branded_pdf(
     hdr = ParagraphStyle("hdr", fontName="Helvetica-Bold", fontSize=6.5, textColor=GREY)
     hdr_r = ParagraphStyle("hdrr", parent=hdr)
     your_style = ParagraphStyle("your", fontName="Helvetica-Bold", fontSize=8.5, textColor=NAVY)
-    data = [[
-        Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
-        Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r), Paragraph("CHANCE", hdr),
-    ]]
+    srno_style = ParagraphStyle("srno", fontName="Helvetica-Bold", fontSize=8, textColor=NAVY)
+    code_style = ParagraphStyle("code", fontName="Helvetica", fontSize=7.5, textColor=NAVY)
+    pref_style = ParagraphStyle("pref", fontName="Helvetica", fontSize=7.5, textColor=GREY)
+
+    if extended:
+        data = [[
+            Paragraph("SR.NO", hdr), Paragraph("COLLEGE CODE", hdr), Paragraph("COLLEGE", hdr),
+            Paragraph("CATEGORY", hdr), Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r),
+            Paragraph("CHANCE", hdr), Paragraph("YOUR PREFERENCE", hdr),
+        ]]
+    else:
+        data = [[
+            Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
+            Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r), Paragraph("CHANCE", hdr),
+        ]]
     row_styles = []
     for i, r in enumerate(ordered, start=1):
         band = r.get("chance", "")
-        data.append([
-            [Paragraph(str(r.get("college_name", "")).title(), cname),
-             Paragraph(f"{r.get('college_code','')} · {r.get('status','')} · Maharashtra", csub)],
-            [Paragraph(str(category), cell), Paragraph(mode_tag, cellsub)],
-            Paragraph(cutoff_fmt(cutoff_of(r)), cell),
-            Paragraph(your_value, your_style),
-            Paragraph(band, ParagraphStyle(
-                "bnd", fontName="Helvetica-Bold", fontSize=8,
-                textColor=BAND_COLORS.get(band, NAVY))),
-        ])
+        band_para = Paragraph(chance_label(band), ParagraphStyle(
+            "bnd", fontName="Helvetica-Bold", fontSize=7.5 if extended else 8,
+            textColor=BAND_COLORS.get(band, NAVY)))
+        if extended:
+            data.append([
+                Paragraph(str(i), srno_style),
+                Paragraph(str(r.get("college_code", "")), code_style),
+                [Paragraph(str(r.get("college_name", "")).title(), cname),
+                 Paragraph(f"{r.get('status','')} · Maharashtra", csub)],
+                [Paragraph(str(category), cell), Paragraph(mode_tag, cellsub)],
+                Paragraph(cutoff_fmt(cutoff_of(r)), cell),
+                Paragraph(your_value, your_style),
+                band_para,
+                Paragraph("________", pref_style),
+            ])
+        else:
+            data.append([
+                [Paragraph(str(r.get("college_name", "")).title(), cname),
+                 Paragraph(f"{r.get('college_code','')} · {r.get('status','')} · Maharashtra", csub)],
+                [Paragraph(str(category), cell), Paragraph(mode_tag, cellsub)],
+                Paragraph(cutoff_fmt(cutoff_of(r)), cell),
+                Paragraph(your_value, your_style),
+                band_para,
+            ])
         row_styles.append(("LINEBELOW", (0, i), (-1, i), 0.5, LINE))
 
-    tbl = Table(data, colWidths=[86 * mm, 26 * mm, 24 * mm, 24 * mm, 22 * mm], repeatRows=1)
+    if extended:
+        col_widths = [10 * mm, 16 * mm, 54 * mm, 18 * mm, 19 * mm, 19 * mm, 28 * mm, 18 * mm]
+    else:
+        col_widths = [86 * mm, 26 * mm, 24 * mm, 24 * mm, 22 * mm]
+
+    tbl = Table(data, colWidths=col_widths, repeatRows=1)
     tbl.setStyle(TableStyle([
         ("LINEBELOW", (0, 0), (-1, 0), 0.9, colors.HexColor("#cbd5e1")),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (0, -1), "CENTER") if extended else ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ("TOPPADDING", (0, 1), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 1), (-1, -1), 5),
         ("LEFTPADDING", (0, 0), (-1, -1), 2),
