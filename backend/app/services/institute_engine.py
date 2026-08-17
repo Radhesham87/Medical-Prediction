@@ -222,6 +222,20 @@ def module_options(key: str) -> dict:
     return md.options() if md else {}
 
 
+def reload_module(key: str) -> Optional[dict]:
+    """Force a module to re-read its .xlsx file from disk (picks up edits
+    made to the file without needing a full backend restart)."""
+    md = _data.get(key)
+    if md is None:
+        return None
+    md.reload()
+    return md.stats()
+
+
+def reload_all_modules() -> Dict[str, dict]:
+    return {key: md.reload() and md.stats() for key, md in _data.items()}
+
+
 def predict_institute(
     *,
     module: str,

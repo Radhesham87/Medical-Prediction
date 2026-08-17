@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_approved_user
+from app.api.deps import get_approved_user, get_current_admin
 from app.api.module_guard import ensure_module_allowed, log_usage
 from app.core.branding import pdf_headline_for, pdf_letterhead_for
 from app.db.session import get_db
@@ -20,7 +20,13 @@ from app.schemas.institute import (
     InstitutePredictRequest,
     InstitutePredictResponse,
 )
-from app.services.institute_engine import MODULES, module_options, predict_institute
+from app.services.institute_engine import (
+    MODULES,
+    module_options,
+    predict_institute,
+    reload_all_modules,
+    reload_module,
+)
 from app.services.institute_pdf import build_institute_pdf
 
 router = APIRouter(prefix="/institute", tags=["institute"])
@@ -32,6 +38,24 @@ def _require_module(module: str):
     if module not in _VALID:
         raise HTTPException(status_code=404, detail=f"Unknown module '{module}'")
     return MODULES[module]
+
+
+@router.post("/reload-all")
+def reload_all(user: User = Depends(get_current_admin)):
+    """Admin-only: re-read every institute .xlsx (AIIMS, All-India, Deemed,
+    MBBS-Other-State, BAMS-Other-State, Veterinary) from disk without
+    restarting the backend. Use after replacing a data file on the server."""
+    return reload_all_modules()
+
+
+@router.post("/{module}/reload")
+def reload_one(module: str = Path(...), user: User = Depends(get_current_admin)):
+    """Admin-only: re-read a single module's .xlsx from disk."""
+    _require_module(module)
+    stats = reload_module(module)
+    if stats is None:
+        raise HTTPException(status_code=404, detail=f"Unknown module '{module}'")
+    return stats
 
 
 @router.get("/{module}/options", response_model=InstituteOptions)
