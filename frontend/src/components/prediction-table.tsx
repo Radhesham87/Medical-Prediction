@@ -9,6 +9,7 @@ const BADGE: Record<string, string> = {
   High: "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400",
   Moderate: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
   Low: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
+  "No Data": "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400",
 };
 
 export function PredictionTable({
@@ -71,7 +72,7 @@ export function PredictionTable({
           />
         </div>
         <select className="input w-auto" value={chance} onChange={(e) => setChance(e.target.value)}>
-          {["All", "High", "Moderate", "Low"].map((c) => (
+          {["All", "High", "Moderate", "Low", "No Data"].map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>

@@ -72,10 +72,17 @@ class _Dataset:
         df["gen"] = qg[1].str.strip().str.upper()
 
         # Numeric coercion + drop physically impossible NEET scores / ranks.
+        # Rows with genuinely missing cutoff data (NaN) are kept - these
+        # represent colleges we know exist but have no last-year cutoff for
+        # yet (e.g. a newly added college). They're surfaced in predict()
+        # with chance="No Data" instead of being silently dropped here.
+        # Only rows with an out-of-range *value* (not missing) are excluded.
         df["NEET Score"] = pd.to_numeric(df["NEET Score"], errors="coerce")
         df["AIR"] = pd.to_numeric(df["AIR"], errors="coerce")
         df["SML"] = pd.to_numeric(df["SML"], errors="coerce")
-        df = df[(df["NEET Score"].between(0, 720)) & (df["AIR"] > 0)]
+        score_ok = df["NEET Score"].isna() | df["NEET Score"].between(0, 720)
+        air_ok = df["AIR"].isna() | (df["AIR"] > 0)
+        df = df[score_ok & air_ok]
 
         # Extract numeric category rank from the "Category" column (e.g. "SEBC-2710").
         def _rank(val) -> Optional[str]:
@@ -139,7 +146,7 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
     return None
 
 
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Data": 3}
 
 
 def predict(
@@ -165,6 +172,19 @@ def predict(
 
     subset = df[(df["Degree"].isin(wanted)) & (df["cat"] == cat) & (df["gen"] == gen)].copy()
 
+    # Colleges with NO cutoff data at all for a degree (every field blank -
+    # e.g. a newly added college with no last-year cutoff yet) have no
+    # Quota-Gender value, so they can never match a specific cat/gen query
+    # above. Surface them separately, once per college+degree, regardless of
+    # the category/gender selected, so they aren't invisible to every search.
+    no_data_mask = (
+        df["Degree"].isin(wanted)
+        & df["NEET Score"].isna()
+        & df["AIR"].isna()
+        & df["SML"].isna()
+    )
+    no_data_subset = df[no_data_mask].drop_duplicates(subset=["College Code", "Degree"]).copy()
+
     # Optional College Type filter (Government / Private). "Any"/None/"" = no filter.
     # College Status values include minority-status variants like
     # "Private (Muslim Minority)" or "Government (Jain Minority)" - these must
@@ -176,8 +196,11 @@ def predict(
         subset = subset[
             subset["College Status"].astype(str).str.strip().str.title().str.startswith(wanted_type)
         ]
+        no_data_subset = no_data_subset[
+            no_data_subset["College Status"].astype(str).str.strip().str.title().str.startswith(wanted_type)
+        ]
 
-    if subset.empty:
+    if subset.empty and no_data_subset.empty:
         return []
 
     rows: list[dict] = []
@@ -216,6 +239,31 @@ def predict(
                 "chance": band,
                 "_cutoff_score": float(cutoff_score),
                 "_cutoff_air": float(cutoff_air),
+            }
+        )
+
+    # Colleges with no cutoff data at all: still surfaced, but clearly
+    # labelled "No Data" and sorted to the end (see _BAND_ORDER) rather than
+    # silently disappearing from results.
+    already_shown = {row["college_code"] for row in rows}
+    for _, r in no_data_subset.iterrows():
+        code = str(r["College Code"])
+        if code in already_shown:
+            continue
+        already_shown.add(code)
+        rows.append(
+            {
+                "college_code": code,
+                "college_name": str(r["College Name"]),
+                "status": str(r["College Status"]),
+                "degree": str(r["Degree"]),
+                "neet_score": None,
+                "neet_sml": None,
+                "air": None,
+                "category_rank": None,
+                "chance": "No Data",
+                "_cutoff_score": float("-inf"),
+                "_cutoff_air": float("inf"),
             }
         )
 

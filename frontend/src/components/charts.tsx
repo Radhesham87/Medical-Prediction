@@ -12,7 +12,10 @@ const CHANCE_COLOR: Record<string, string> = {
 export function ChanceSummary({ items }: { items: { chance: string }[] }) {
   const counts = { High: 0, Moderate: 0, Low: 0 } as Record<string, number>;
   for (const it of items) if (it.chance in counts) counts[it.chance] += 1;
-  const total = items.length || 1;
+  // "No Data" items (colleges with no cutoff data yet) are shown in the
+  // table but excluded from this High/Moderate/Low distribution, since
+  // they don't represent a graded chance.
+  const total = counts.High + counts.Moderate + counts.Low || 1;
 
   return (
     <div className="card p-4">
