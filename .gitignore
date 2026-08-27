@@ -21,3 +21,5 @@ frontend/.env
 .idea/
 .vscode/
 *.log
+
+~$*.xlsx
