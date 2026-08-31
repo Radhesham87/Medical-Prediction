@@ -46,6 +46,19 @@ _GROVY_LETTERHEAD = {
     "counselling_layout": True,
 }
 
+_BROADWAY_LETTERHEAD = {
+    "header_path": str(ASSETS_DIR / "broadway_header.jpg"),
+    "header_w_mm": 182,
+    "header_h_mm": 40.5,
+    "header_as_flowable": True,  # drawn as the first element of page 1 only
+    "footer_path": str(ASSETS_DIR / "broadway_footer.jpg"),
+    "footer_h_mm": 14,  # thin contact-info strip, letterboxed on the last page
+    "watermark_path": str(ASSETS_DIR / "broadway_watermark.jpg"),
+    "watermark_w_mm": 105,
+    "footer_text": "Generated via Broadway Educational Counselling Center",
+    "counselling_layout": True,
+}
+
 BRANDED_PDF_USERS = {
     # This account gets the standard DR SHINDE headline layout PLUS an
     # extended college table: Sr. No. and College Code columns, a blank
@@ -78,6 +91,12 @@ BRANDED_PDF_USERS = {
     # watermark, address/phone footer bar on the last page.
     "gncnanded@gmail.com": {
         "letterhead": _GROVY_LETTERHEAD,
+    },
+    # Broadway Educational Counselling Center, Nanded: full banner header on
+    # page 1 only, graduation-cap logo watermark on every page, address/phone
+    # contact strip on the last page only.
+    "ganeshtidkepatil@gmail.com": {
+        "letterhead": _BROADWAY_LETTERHEAD,
     },
 }
 
