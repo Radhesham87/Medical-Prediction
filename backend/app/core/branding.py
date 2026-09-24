@@ -115,9 +115,12 @@ BRANDED_PDF_USERS = {
     # watermark on every page, contact/branches strip on the last page only.
     "azam3272@gmail.com": {
         "letterhead": _COLLEGECHASE_LETTERHEAD,
+<<<<<<< HEAD
         # Adds an ANNUAL FEE column (from the "Total Annual Fee" column of
         # All_Medical_College_Last_Cutoff.xlsx) to this account's PDFs only.
         "show_fee": True,
+=======
+>>>>>>> 961d194f8a9d4b569196d35f9846c2c3f33f5f65
     },
 }
 
