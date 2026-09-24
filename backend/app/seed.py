@@ -47,6 +47,11 @@ BROADWAY_USER_EMAIL = "ganeshtidkepatil@gmail.com"
 BROADWAY_USER_PASSWORD = "Ganesh@98"
 BROADWAY_USER_NAME = "Broadway Educational Counselling Center"
 
+# Fixed counselling account for College Chase Academy, Pune (branded PDFs).
+COLLEGECHASE_USER_EMAIL = "azam3272@gmail.com"
+COLLEGECHASE_USER_PASSWORD = "Chase@0202"
+COLLEGECHASE_USER_NAME = "College Chase Academy"
+
 
 def _ensure_grovy_user(db) -> None:
     u = (
@@ -97,6 +102,34 @@ def _ensure_broadway_user(db) -> None:
     if not verify_password(BROADWAY_USER_PASSWORD, u.hashed_password):
         u.hashed_password = hash_password(BROADWAY_USER_PASSWORD)
         logger.info("Reset Broadway user password to the configured value")
+    u.role = Role.USER
+    u.status = Status.APPROVED
+    u.is_active = True
+    db.commit()
+    _grant_all_modules(db, u)
+
+
+def _ensure_collegechase_user(db) -> None:
+    u = (
+        db.query(User)
+        .filter(func.lower(User.email) == COLLEGECHASE_USER_EMAIL)
+        .one_or_none()
+    )
+    if u is None:
+        u = User(
+            name=COLLEGECHASE_USER_NAME,
+            email=COLLEGECHASE_USER_EMAIL,
+            mobile="0000000000",
+            hashed_password=hash_password(COLLEGECHASE_USER_PASSWORD),
+            role=Role.USER,
+            status=Status.APPROVED,
+            is_active=True,
+        )
+        db.add(u)
+        logger.info("Seeded College Chase user: %s", COLLEGECHASE_USER_EMAIL)
+    if not verify_password(COLLEGECHASE_USER_PASSWORD, u.hashed_password):
+        u.hashed_password = hash_password(COLLEGECHASE_USER_PASSWORD)
+        logger.info("Reset College Chase user password to the configured value")
     u.role = Role.USER
     u.status = Status.APPROVED
     u.is_active = True
@@ -356,5 +389,6 @@ def init_db() -> None:
         _ensure_aspire_user(db)
         _ensure_grovy_user(db)
         _ensure_broadway_user(db)
+        _ensure_collegechase_user(db)
     finally:
         db.close()
