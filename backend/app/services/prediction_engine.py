@@ -122,6 +122,27 @@ class _Dataset:
 dataset = _Dataset()
 
 
+def fee_lookup(category: str, gender: str) -> dict:
+    """Map (college_code, degree) -> Total Annual Fee for one category+gender,
+    read from the "Total Annual Fee" column of the dataset. Only used for PDFs
+    of accounts that have fees enabled (see core/branding.py). Missing or
+    "--" values are simply left out of the map."""
+    df = dataset.load()
+    if "Total Annual Fee" not in df.columns:
+        return {}
+    cat = CATEGORY_MAP.get(str(category).upper())
+    gen = GENDER_MAP.get(gender)
+    if cat is None or gen is None:
+        return {}
+    sub = df[(df["cat"] == cat) & (df["gen"] == gen)]
+    fees = pd.to_numeric(sub["Total Annual Fee"], errors="coerce")
+    out: dict = {}
+    for code, degree, fee in zip(sub["College Code"], sub["Degree"], fees):
+        if pd.notna(fee):
+            out.setdefault((str(code), str(degree)), int(fee))
+    return out
+
+
 def _band_by_score(candidate: float, cutoff: float) -> Optional[str]:
     delta = candidate - cutoff
     if delta >= SCORE_HIGH_MARGIN:

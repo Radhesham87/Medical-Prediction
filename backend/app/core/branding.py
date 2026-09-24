@@ -59,6 +59,19 @@ _BROADWAY_LETTERHEAD = {
     "counselling_layout": True,
 }
 
+_COLLEGECHASE_LETTERHEAD = {
+    "header_path": str(ASSETS_DIR / "collegechase_header.jpg"),
+    "header_w_mm": 182,
+    "header_h_mm": 28.7,  # 1917x302 banner at 182 mm wide
+    "header_as_flowable": True,  # drawn as the first element of page 1 only
+    "footer_path": str(ASSETS_DIR / "collegechase_footer.jpg"),
+    "footer_h_mm": 16,  # contact/branches strip, letterboxed on the last page
+    "watermark_path": str(ASSETS_DIR / "collegechase_watermark.jpg"),
+    "watermark_w_mm": 105,
+    "footer_text": "Generated via College Chase Academy",
+    "counselling_layout": True,
+}
+
 BRANDED_PDF_USERS = {
     # This account gets the standard DR SHINDE headline layout PLUS an
     # extended college table: Sr. No. and College Code columns, a blank
@@ -98,6 +111,14 @@ BRANDED_PDF_USERS = {
     "ganeshtidkepatil@gmail.com": {
         "letterhead": _BROADWAY_LETTERHEAD,
     },
+    # College Chase Academy, Pune: banner header on page 1 only, hexagon logo
+    # watermark on every page, contact/branches strip on the last page only.
+    "azam3272@gmail.com": {
+        "letterhead": _COLLEGECHASE_LETTERHEAD,
+        # Adds an ANNUAL FEE column (from the "Total Annual Fee" column of
+        # All_Medical_College_Last_Cutoff.xlsx) to this account's PDFs only.
+        "show_fee": True,
+    },
 }
 
 
@@ -120,3 +141,8 @@ def pdf_letterhead_for(email: Optional[str]) -> Optional[dict]:
 def pdf_table_variant_for(email: Optional[str]) -> Optional[str]:
     brand = pdf_brand_for(email)
     return brand.get("table_variant") if brand else None
+
+
+def pdf_show_fee_for(email: Optional[str]) -> bool:
+    brand = pdf_brand_for(email)
+    return bool(brand.get("show_fee")) if brand else False

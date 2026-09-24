@@ -65,6 +65,25 @@ def _pdf_safe(text: str) -> str:
 
 PRIMARY = colors.HexColor("#1e3a8a")   # medical blue
 LIGHT = colors.HexColor("#eff6ff")
+FEE_PURPLE = colors.HexColor("#7c3aed")
+
+
+def _inr(amount) -> str:
+    """Indian digit grouping: 157100 -> 1,57,100."""
+    n = int(round(float(amount)))
+    sign, s = ("-" if n < 0 else ""), str(abs(n))
+    if len(s) <= 3:
+        return sign + s
+    head, tail = s[:-3], s[-3:]
+    parts = []
+    while len(head) > 2:
+        parts.insert(0, head[-2:])
+        head = head[:-2]
+    if head:
+        parts.insert(0, head)
+    return sign + ",".join(parts + [tail])
+
+
 BAND_COLORS = {
     "High": colors.HexColor("#16a34a"),
     "Moderate": colors.HexColor("#d97706"),
@@ -108,6 +127,7 @@ def build_prediction_pdf(
     brand_headline: Optional[str] = None,
     letterhead: Optional[dict] = None,
     table_variant: Optional[str] = None,
+    show_fee: bool = False,
 ) -> bytes:
     if brand_headline or (letterhead and letterhead.get("counselling_layout")):
         return _build_branded_pdf(
@@ -122,6 +142,7 @@ def build_prediction_pdf(
             results=results,
             letterhead=letterhead,
             table_variant=table_variant,
+            show_fee=show_fee,
         )
     buf = BytesIO()
     top_margin = 18 * mm
@@ -255,8 +276,10 @@ def _build_branded_pdf(
     results: List[dict],
     letterhead: Optional[dict] = None,
     table_variant: Optional[str] = None,
+    show_fee: bool = False,
 ) -> bytes:
     extended = table_variant == "extended"
+    show_fee = show_fee and not extended
     chance_label = (lambda c: EXTENDED_CHANCE_LABELS.get(c, c)) if extended else (lambda c: c)
     buf = BytesIO()
     top_margin = 14 * mm
@@ -407,6 +430,19 @@ def _build_branded_pdf(
     srno_style = ParagraphStyle("srno", fontName=FONT_BOLD, fontSize=8, textColor=NAVY)
     code_style = ParagraphStyle("code", fontName=FONT_REGULAR, fontSize=7.5, textColor=NAVY)
     pref_style = ParagraphStyle("pref", fontName=FONT_REGULAR, fontSize=7.5, textColor=GREY)
+    fee_style = ParagraphStyle("fee", fontName=FONT_BOLD, fontSize=9.5, textColor=FEE_PURPLE,
+                               alignment=TA_RIGHT, leading=12)
+    fee_na_style = ParagraphStyle("feena", parent=fee_style, textColor=GREY)
+    fee_note = ParagraphStyle("feenote", fontName=FONT_REGULAR, fontSize=5.8, textColor=GREY,
+                              alignment=TA_RIGHT, leading=7)
+    hdr_fee = ParagraphStyle("hdrfee", parent=hdr, alignment=TA_RIGHT)
+
+    def fee_cell(r):
+        fee = r.get("annual_fee")
+        if fee is None:
+            return [Paragraph("--", fee_na_style), Paragraph("Fee not available", fee_note)]
+        return [Paragraph(f"\u20b9 {_inr(fee)}", fee_style),
+                Paragraph("*Prev. Year Fee \u00b7 Check 2026-27", fee_note)]
 
     if extended:
         data = [[
@@ -419,6 +455,8 @@ def _build_branded_pdf(
             Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
             Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r), Paragraph("CHANCE", hdr),
         ]]
+        if show_fee:
+            data[0].append(Paragraph("ANNUAL FEE", hdr_fee))
     row_styles = []
     for i, r in enumerate(ordered, start=1):
         band = r.get("chance", "")
@@ -445,11 +483,13 @@ def _build_branded_pdf(
                 Paragraph(cutoff_fmt(cutoff_of(r)), cell),
                 Paragraph(your_value, your_style),
                 band_para,
-            ])
+            ] + ([fee_cell(r)] if show_fee else []))
         row_styles.append(("LINEBELOW", (0, i), (-1, i), 0.5, LINE))
 
     if extended:
         col_widths = [10 * mm, 16 * mm, 54 * mm, 18 * mm, 19 * mm, 19 * mm, 28 * mm, 18 * mm]
+    elif show_fee:
+        col_widths = [66 * mm, 22 * mm, 20 * mm, 20 * mm, 20 * mm, 34 * mm]
     else:
         col_widths = [86 * mm, 26 * mm, 24 * mm, 24 * mm, 22 * mm]
 

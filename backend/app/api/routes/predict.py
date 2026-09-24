@@ -7,13 +7,18 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_approved_user
 from app.api.module_guard import ensure_module_allowed, log_usage
-from app.core.branding import pdf_headline_for, pdf_letterhead_for, pdf_table_variant_for
+from app.core.branding import (
+    pdf_headline_for,
+    pdf_letterhead_for,
+    pdf_show_fee_for,
+    pdf_table_variant_for,
+)
 from app.db.session import get_db
 from app.models.prediction import Prediction
 from app.models.user import User
 from app.schemas.prediction import PredictionRequest, PredictionResponse
 from app.services.pdf_generator import build_prediction_pdf
-from app.services.prediction_engine import predict as run_engine
+from app.services.prediction_engine import fee_lookup, predict as run_engine
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -78,6 +83,17 @@ def download_pdf(
     if not record or (record.user_id != user.id and user.role.value != "admin"):
         raise HTTPException(status_code=404, detail="Prediction not found")
 
+    results = record.results
+    show_fee = pdf_show_fee_for(user.email)
+    if show_fee:
+        # Fees are looked up at download time, so older saved predictions
+        # also get them and the stored history is left untouched.
+        fees = fee_lookup(record.category, record.gender)
+        results = [
+            {**r, "annual_fee": fees.get((str(r.get("college_code", "")), str(r.get("degree", ""))))}
+            for r in results
+        ]
+
     pdf = build_prediction_pdf(
         student_name=record.student_name,
         mode=record.mode,
@@ -89,8 +105,9 @@ def download_pdf(
         letterhead=pdf_letterhead_for(user.email),
         table_variant=pdf_table_variant_for(user.email),
         category=record.category,
-        results=record.results,
+        results=results,
         show_category_rank=record.category.upper() != "OPEN",
+        show_fee=show_fee,
     )
     record.downloads += 1
     db.commit()
