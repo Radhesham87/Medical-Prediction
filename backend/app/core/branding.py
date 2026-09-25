@@ -146,5 +146,5 @@ def pdf_table_variant_for(email: Optional[str]) -> Optional[str]:
 
 
 def pdf_show_fee_for(email: Optional[str]) -> bool:
-    brand = pdf_brand_for(email)
-    return bool(brand.get("show_fee")) if brand else False
+    """The ANNUAL FEE column is shown in every account's PDF."""
+    return True

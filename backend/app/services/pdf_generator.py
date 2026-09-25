@@ -198,6 +198,20 @@ def build_prediction_pdf(
     if show_category_rank:
         headers.append("Cat Rank")
     headers.append("Chance")
+    if show_fee:
+        headers.append("Annual Fee")
+
+    fee_std = ParagraphStyle("feestd", fontName=FONT_BOLD, fontSize=7, leading=8.5,
+                             textColor=FEE_PURPLE, alignment=TA_RIGHT)
+    fee_std_note = ParagraphStyle("feestdn", fontName=FONT_REGULAR, fontSize=4.8, leading=5.8,
+                                  textColor=colors.HexColor("#64748b"), alignment=TA_RIGHT)
+
+    def fee_std_cell(r):
+        fee = r.get("annual_fee")
+        if fee is None:
+            return Paragraph("--", ParagraphStyle("feestdna", parent=fee_std, textColor=colors.HexColor("#64748b")))
+        return [Paragraph(f"\u20b9 {_inr(fee)}", fee_std),
+                Paragraph("*Prev. Year Fee", fee_std_note)]
 
     data = [headers]
     for r in results:
@@ -214,12 +228,22 @@ def build_prediction_pdf(
         if show_category_rank:
             row.append(r.get("category_rank") or "--")
         row.append(r["chance"])
+        if show_fee:
+            row.append(fee_std_cell(r))
         data.append(row)
 
-    col_widths = [8 * mm, 14 * mm, 52 * mm, 18 * mm, 14 * mm, 13 * mm, 13 * mm, 16 * mm]
-    if show_category_rank:
-        col_widths.append(15 * mm)
-    col_widths.append(16 * mm)
+    if show_fee:
+        # Narrower numeric columns so the college name keeps room next to fees.
+        col_widths = [8 * mm, 11 * mm, (46 if show_category_rank else 60) * mm, 17 * mm, 13 * mm,
+                      12 * mm, 12 * mm, 14 * mm]
+        if show_category_rank:
+            col_widths.append(14 * mm)
+        col_widths += [14 * mm, 19 * mm]
+    else:
+        col_widths = [8 * mm, 14 * mm, 52 * mm, 18 * mm, 14 * mm, 13 * mm, 13 * mm, 16 * mm]
+        if show_category_rank:
+            col_widths.append(15 * mm)
+        col_widths.append(16 * mm)
 
     tbl = Table(data, colWidths=col_widths, repeatRows=1)
     style = [
@@ -233,7 +257,7 @@ def build_prediction_pdf(
         ("TOPPADDING", (0, 0), (-1, -1), 3),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]
-    chance_col = len(headers) - 1
+    chance_col = headers.index("Chance")
     for i, r in enumerate(results, start=1):
         style.append(("TEXTCOLOR", (chance_col, i), (chance_col, i), BAND_COLORS.get(r["chance"], colors.black)))
         style.append(("FONTNAME", (chance_col, i), (chance_col, i), FONT_BOLD))
@@ -279,7 +303,6 @@ def _build_branded_pdf(
     show_fee: bool = False,
 ) -> bytes:
     extended = table_variant == "extended"
-    show_fee = show_fee and not extended
     chance_label = (lambda c: EXTENDED_CHANCE_LABELS.get(c, c)) if extended else (lambda c: c)
     buf = BytesIO()
     top_margin = 14 * mm
@@ -450,6 +473,8 @@ def _build_branded_pdf(
             Paragraph("CATEGORY", hdr), Paragraph("CUTOFF", hdr_r), Paragraph("YOUR " + mode_tag, hdr_r),
             Paragraph("CHANCE", hdr), Paragraph("YOUR PREFERENCE", hdr),
         ]]
+        if show_fee:
+            data[0].append(Paragraph("ANNUAL FEE", hdr_fee))
     else:
         data = [[
             Paragraph("COLLEGE", hdr), Paragraph("CATEGORY", hdr),
@@ -474,7 +499,7 @@ def _build_branded_pdf(
                 Paragraph(your_value, your_style),
                 band_para,
                 Paragraph("________", pref_style),
-            ])
+            ] + ([fee_cell(r)] if show_fee else []))
         else:
             data.append([
                 [Paragraph(_pdf_safe(str(r.get("college_name", ""))).title(), cname),
@@ -486,7 +511,9 @@ def _build_branded_pdf(
             ] + ([fee_cell(r)] if show_fee else []))
         row_styles.append(("LINEBELOW", (0, i), (-1, i), 0.5, LINE))
 
-    if extended:
+    if extended and show_fee:
+        col_widths = [10 * mm, 13 * mm, 47 * mm, 16 * mm, 14 * mm, 14 * mm, 25 * mm, 17 * mm, 26 * mm]
+    elif extended:
         col_widths = [10 * mm, 16 * mm, 54 * mm, 18 * mm, 19 * mm, 19 * mm, 28 * mm, 18 * mm]
     elif show_fee:
         col_widths = [66 * mm, 22 * mm, 20 * mm, 20 * mm, 20 * mm, 34 * mm]
