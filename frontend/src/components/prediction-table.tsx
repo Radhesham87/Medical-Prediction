@@ -112,14 +112,14 @@ export function PredictionTable({
                 <td className="px-3 py-2 capitalize">{r.college_name.toLowerCase()}</td>
                 <td className="px-3 py-2">{r.status}</td>
                 <td className="px-3 py-2">{r.degree}</td>
-                <td className="px-3 py-2">{r.neet_score ?? "-"}</td>
-                <td className="px-3 py-2">{r.neet_sml ?? "-"}</td>
-                <td className="px-3 py-2">{r.air ? r.air.toLocaleString("en-IN") : "-"}</td>
-                {showCategoryRank && <td className="px-3 py-2">{r.category_rank ?? "-"}</td>}
+                <td className="px-3 py-2">{r.neet_score ?? "--"}</td>
+                <td className="px-3 py-2">{r.neet_sml ?? "--"}</td>
+                <td className="px-3 py-2">{r.air ? r.air.toLocaleString("en-IN") : "--"}</td>
+                {showCategoryRank && <td className="px-3 py-2">{r.category_rank ?? "--"}</td>}
                 <td className="px-3 py-2">
                   {(() => {
                     const m = marginOf(r);
-                    if (m === null) return "-";
+                    if (m === null) return "--";
                     const good = m >= 0;
                     return (
                       <span className={good ? "text-green-600" : "text-red-600"}>

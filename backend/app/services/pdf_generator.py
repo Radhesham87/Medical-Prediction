@@ -207,12 +207,12 @@ def build_prediction_pdf(
             Paragraph(_pdf_safe(r["college_name"]).title(), ParagraphStyle("c", fontName=FONT_REGULAR, fontSize=7, leading=8)),
             r["status"],
             r["degree"],
-            f"{r['neet_score']:g}" if r.get("neet_score") is not None else "-",
-            f"{r['neet_sml']:g}" if r.get("neet_sml") is not None else "-",
-            f"{r['air']:,}" if r.get("air") is not None else "-",
+            f"{r['neet_score']:g}" if r.get("neet_score") is not None else "--",
+            f"{r['neet_sml']:g}" if r.get("neet_sml") is not None else "--",
+            f"{r['air']:,}" if r.get("air") is not None else "--",
         ]
         if show_category_rank:
-            row.append(r.get("category_rank") or "-")
+            row.append(r.get("category_rank") or "--")
         row.append(r["chance"])
         data.append(row)
 
@@ -408,17 +408,17 @@ def _build_branded_pdf(
     # ------- college table -------
     if mode == "score":
         cutoff_of = lambda r: r.get("neet_score")
-        cutoff_fmt = lambda v: f"{v:g}" if v is not None else "-"
+        cutoff_fmt = lambda v: f"{v:g}" if v is not None else "--"
         mode_tag, your_value = "SCORE", f"{score:g}"
         sort_key = lambda r: (cutoff_of(r) is None, -(cutoff_of(r) or 0))
     elif mode == "sml":
         cutoff_of = lambda r: r.get("neet_sml")
-        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "-"
+        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "--"
         mode_tag, your_value = "SML", f"{int(sml):,}"
         sort_key = lambda r: (cutoff_of(r) is None, cutoff_of(r) or 0)
     else:
         cutoff_of = lambda r: r.get("air")
-        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "-"
+        cutoff_fmt = lambda v: f"{int(v):,}" if v is not None else "--"
         mode_tag, your_value = "AIR", f"{int(air):,}"
         sort_key = lambda r: (cutoff_of(r) is None, cutoff_of(r) or 0)
 
