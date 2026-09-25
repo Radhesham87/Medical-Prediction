@@ -94,6 +94,8 @@ BRANDED_PDF_USERS = {
             "watermark_path": str(ASSETS_DIR / "brightfuture_watermark.jpg"),
             "watermark_w_mm": 110,
         },
+        # ANNUAL FEE column in this account's PDFs too.
+        "show_fee": True,
     },
     # Aspire Career Counselling Center: banner header on page 1, logo watermark
     # on every page, Latur address strip on the last page.
