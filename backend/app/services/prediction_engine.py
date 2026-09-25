@@ -40,6 +40,7 @@ CATEGORY_MAP = {
     "EWS-HA": "EWS-HA", "NTB-HA": "NTB-HA", "NTC-HA": "NTC-HA", "NTD-HA": "NTD-HA",
 }
 GENDER_MAP = {"Male": "M", "Female": "F"}
+GOVT_ONLY_CATEGORIES = {"EWS", "D1", "D2", "D3"}
 COLLEGE_TYPES = {"Government", "Private"}
 ALL_DEGREES = ["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"]
 
@@ -190,6 +191,13 @@ def predict(
     gen = GENDER_MAP.get(gender)
     if cat is None or gen is None:
         return []
+
+    # EWS and Defence (D1/D2/D3) reservations apply only to Government
+    # colleges, so private colleges are never listed for these categories.
+    if cat in GOVT_ONLY_CATEGORIES:
+        if college_type and college_type.strip().title() == "Private":
+            return []
+        college_type = "Government"
 
     subset = df[(df["Degree"].isin(wanted)) & (df["cat"] == cat) & (df["gen"] == gen)].copy()
 
