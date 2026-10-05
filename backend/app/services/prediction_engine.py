@@ -13,6 +13,7 @@ Chance bands are heuristic and tuned to be interpretable, not a guarantee.
 """
 from __future__ import annotations
 
+import os
 import threading
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -97,12 +98,23 @@ class _Dataset:
         df["College Code"] = df["College Code"].astype(str).str.replace(r"\.0$", "", regex=True)
         return df.reset_index(drop=True)
 
+    def _file_mtime(self) -> Optional[float]:
+        try:
+            return os.path.getmtime(settings.DATASET_PATH)
+        except OSError:
+            return None
+
     def load(self, force: bool = False) -> pd.DataFrame:
         with self._lock:
-            if self._df is None or force:
+            # Re-read automatically whenever the xlsx on disk has changed
+            # (new deploy, manual replace), so stale cutoffs are never served.
+            mtime = self._file_mtime()
+            changed = mtime is not None and mtime != getattr(self, "_mtime", None)
+            if self._df is None or force or changed:
                 logger.info("Loading dataset from %s", settings.DATASET_PATH)
                 raw = pd.read_excel(settings.DATASET_PATH, sheet_name=settings.DATASET_SHEET)
                 self._df = self._normalise(raw)
+                self._mtime = mtime
                 self._loaded_at = datetime.now(timezone.utc)
                 logger.info("Dataset loaded: %d valid rows", len(self._df))
             return self._df

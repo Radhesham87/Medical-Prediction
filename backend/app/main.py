@@ -75,7 +75,13 @@ def root():
 
 @app.get(f"{settings.API_PREFIX}/health", tags=["health"])
 def health():
-    return {"status": "healthy"}
+    # Also reports which cutoff data is live, so a deploy can be verified.
+    from app.services.prediction_engine import dataset
+    try:
+        stats = dataset.stats()
+        return {"status": "healthy", "dataset_rows": stats["valid_rows"], "dataset_loaded_at": stats["loaded_at"]}
+    except Exception:
+        return {"status": "healthy", "dataset_rows": None}
 
 
 for r in (auth, users, admin, predict, history, dataset, institute):
