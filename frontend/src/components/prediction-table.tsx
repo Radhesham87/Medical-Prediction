@@ -72,7 +72,7 @@ export function PredictionTable({
           />
         </div>
         <select className="input w-auto" value={chance} onChange={(e) => setChance(e.target.value)}>
-          {["All", "High", "Moderate", "Low", "No Data"].map((c) => (
+          {["All", "High", "Moderate", "Low"].map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>

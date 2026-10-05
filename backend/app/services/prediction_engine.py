@@ -283,43 +283,9 @@ def predict(
             }
         )
 
-    # Every college offering a selected degree must appear in the results,
-    # even when last year's cutoff has no row for this student's
-    # category/gender (e.g. a college that only has OBC-M and SC-F cutoffs
-    # would otherwise vanish for an OPEN-F student), or the row exists but
-    # the cutoff needed for this mode is blank. Such colleges are listed as
-    # "No Data" with every cutoff shown as "--", sorted to the end.
-    all_colleges = df[df["Degree"].isin(wanted)]
-    if college_type and college_type.strip().title() in COLLEGE_TYPES:
-        all_colleges = all_colleges[
-            all_colleges["College Status"].astype(str).str.strip().str.title().str.startswith(
-                college_type.strip().title()
-            )
-        ]
-    all_colleges = pd.concat([no_data_subset, all_colleges]).drop_duplicates(
-        subset=["College Code", "Degree"]
-    )
-    already_shown = {(row["college_code"], row["degree"]) for row in rows}
-    for _, r in all_colleges.iterrows():
-        key = (str(r["College Code"]), str(r["Degree"]))
-        if key in already_shown:
-            continue
-        already_shown.add(key)
-        rows.append(
-            {
-                "college_code": key[0],
-                "college_name": str(r["College Name"]),
-                "status": str(r["College Status"]),
-                "degree": key[1],
-                "neet_score": None,
-                "neet_sml": None,
-                "air": None,
-                "category_rank": None,
-                "chance": "No Data",
-                "_cutoff_score": float("-inf"),
-                "_cutoff_air": float("inf"),
-            }
-        )
+    # Colleges with no cutoff for this student's category/gender/mode
+    # ("No Data") are intentionally NOT listed - only colleges with a real
+    # last-year cutoff appear in predictions and PDFs.
 
     # Sort: best band first; then most-competitive college first within a band.
     if mode == "score":

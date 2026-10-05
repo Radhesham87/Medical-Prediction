@@ -39,4 +39,11 @@ class Prediction(Base):
 
     @property
     def results(self) -> list[dict]:
-        return json.loads(self.result_json or "[]")
+        # Hide "No Data" rows (no cutoff available) - this also cleans up
+        # predictions saved before they were removed from the engine, so
+        # history and PDF downloads never show them. Serial numbers are
+        # renumbered so the list stays continuous.
+        rows = [r for r in json.loads(self.result_json or "[]") if r.get("chance") != "No Data"]
+        for i, r in enumerate(rows, start=1):
+            r["sr_no"] = i
+        return rows
