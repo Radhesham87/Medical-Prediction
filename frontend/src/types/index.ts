@@ -69,7 +69,7 @@ export interface CollegeResult {
   neet_sml: number | null;
   air: number | null;
   category_rank: string | null;
-  chance: "High" | "Moderate" | "Low";
+  chance: "High" | "Moderate" | "Low" | "No Cutoff";
 }
 
 export interface PredictionResponse {

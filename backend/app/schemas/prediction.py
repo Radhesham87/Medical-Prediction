@@ -51,7 +51,7 @@ class CollegeResult(BaseModel):
     neet_sml: Optional[float]
     air: Optional[int]
     category_rank: Optional[str]
-    chance: str  # "High" | "Moderate" | "Low"
+    chance: str  # "High" | "Moderate" | "Low" | "No Cutoff"
 
 
 class PredictionResponse(BaseModel):

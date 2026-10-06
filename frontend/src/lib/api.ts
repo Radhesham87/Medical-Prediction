@@ -106,7 +106,7 @@ export interface InstituteResultRow {
   category: string | null;
   air: number;
   score: number;
-  chance: "High" | "Moderate" | "Low";
+  chance: "High" | "Moderate" | "Low" | "No Cutoff";
 }
 
 export interface InstitutePredictResult {

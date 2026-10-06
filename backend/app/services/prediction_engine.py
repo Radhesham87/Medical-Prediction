@@ -180,7 +180,12 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
     return None
 
 
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Data": 3}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Cutoff": 3, "No Data": 4}
+
+# For these degrees EVERY college is always listed (BAMS 123, BHMS 52,
+# BUMS 8), even when last year has no cutoff for the student's
+# category/gender - those are shown as "No Cutoff" at the end.
+FULL_LIST_DEGREES = {"BAMS", "BHMS", "BUMS"}
 
 
 def predict(
@@ -283,9 +288,39 @@ def predict(
             }
         )
 
-    # Colleges with no cutoff for this student's category/gender/mode
-    # ("No Data") are intentionally NOT listed - only colleges with a real
-    # last-year cutoff appear in predictions and PDFs.
+    # Other degrees list only colleges with a real last-year cutoff.
+    # BAMS / BHMS / BUMS list every college: the ones without a cutoff for
+    # this category/gender/mode are added as "No Cutoff", sorted to the end.
+    full_degrees = [d for d in wanted if d in FULL_LIST_DEGREES]
+    if full_degrees:
+        all_colleges = df[df["Degree"].isin(full_degrees)]
+        if college_type and college_type.strip().title() in COLLEGE_TYPES:
+            all_colleges = all_colleges[
+                all_colleges["College Status"].astype(str).str.strip().str.title().str.startswith(
+                    college_type.strip().title()
+                )
+            ]
+        already_shown = {(row["college_code"], row["degree"]) for row in rows}
+        for _, r in all_colleges.drop_duplicates(subset=["College Code", "Degree"]).iterrows():
+            key = (str(r["College Code"]), str(r["Degree"]))
+            if key in already_shown:
+                continue
+            already_shown.add(key)
+            rows.append(
+                {
+                    "college_code": key[0],
+                    "college_name": str(r["College Name"]),
+                    "status": str(r["College Status"]),
+                    "degree": key[1],
+                    "neet_score": None,
+                    "neet_sml": None,
+                    "air": None,
+                    "category_rank": None,
+                    "chance": "No Cutoff",
+                    "_cutoff_score": float("-inf"),
+                    "_cutoff_air": float("inf"),
+                }
+            )
 
     # Sort: best band first; then most-competitive college first within a band.
     if mode == "score":
