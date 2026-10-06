@@ -42,6 +42,23 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+@app.middleware("http")
+async def catch_unhandled_errors(request: Request, call_next):
+    """Turn any unhandled error into a JSON 500 *inside* the CORS layer.
+
+    FastAPI's Exception handler runs outside CORSMiddleware, so a crash
+    returned a 500 without Access-Control-Allow-Origin and the browser only
+    showed a misleading "blocked by CORS policy" / "Failed to fetch". Catching
+    here (registered before CORS, so CORS wraps it) keeps the CORS headers on
+    error responses and the real error is logged on Render.
+    """
+    try:
+        return await call_next(request)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Unhandled error on %s: %s", request.url.path, exc)
+        return JSONResponse(status_code=500, content={"detail": "Internal server error. Please try again."})
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
