@@ -13,7 +13,6 @@ Chance bands are heuristic and tuned to be interpretable, not a guarantee.
 """
 from __future__ import annotations
 
-import os
 import threading
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -41,7 +40,6 @@ CATEGORY_MAP = {
     "EWS-HA": "EWS-HA", "NTB-HA": "NTB-HA", "NTC-HA": "NTC-HA", "NTD-HA": "NTD-HA",
 }
 GENDER_MAP = {"Male": "M", "Female": "F"}
-GOVT_ONLY_CATEGORIES = {"EWS", "D1", "D2", "D3"}
 COLLEGE_TYPES = {"Government", "Private"}
 ALL_DEGREES = ["MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"]
 
@@ -98,23 +96,12 @@ class _Dataset:
         df["College Code"] = df["College Code"].astype(str).str.replace(r"\.0$", "", regex=True)
         return df.reset_index(drop=True)
 
-    def _file_mtime(self) -> Optional[float]:
-        try:
-            return os.path.getmtime(settings.DATASET_PATH)
-        except OSError:
-            return None
-
     def load(self, force: bool = False) -> pd.DataFrame:
         with self._lock:
-            # Re-read automatically whenever the xlsx on disk has changed
-            # (new deploy, manual replace), so stale cutoffs are never served.
-            mtime = self._file_mtime()
-            changed = mtime is not None and mtime != getattr(self, "_mtime", None)
-            if self._df is None or force or changed:
+            if self._df is None or force:
                 logger.info("Loading dataset from %s", settings.DATASET_PATH)
                 raw = pd.read_excel(settings.DATASET_PATH, sheet_name=settings.DATASET_SHEET)
                 self._df = self._normalise(raw)
-                self._mtime = mtime
                 self._loaded_at = datetime.now(timezone.utc)
                 logger.info("Dataset loaded: %d valid rows", len(self._df))
             return self._df
@@ -133,27 +120,6 @@ class _Dataset:
 
 
 dataset = _Dataset()
-
-
-def fee_lookup(category: str, gender: str) -> dict:
-    """Map (college_code, degree) -> Total Annual Fee for one category+gender,
-    read from the "Total Annual Fee" column of the dataset. Only used for PDFs
-    of accounts that have fees enabled (see core/branding.py). Missing or
-    "--" values are simply left out of the map."""
-    df = dataset.load()
-    if "Total Annual Fee" not in df.columns:
-        return {}
-    cat = CATEGORY_MAP.get(str(category).upper())
-    gen = GENDER_MAP.get(gender)
-    if cat is None or gen is None:
-        return {}
-    sub = df[(df["cat"] == cat) & (df["gen"] == gen)]
-    fees = pd.to_numeric(sub["Total Annual Fee"], errors="coerce")
-    out: dict = {}
-    for code, degree, fee in zip(sub["College Code"], sub["Degree"], fees):
-        if pd.notna(fee):
-            out.setdefault((str(code), str(degree)), int(fee))
-    return out
 
 
 def _band_by_score(candidate: float, cutoff: float) -> Optional[str]:
@@ -180,12 +146,7 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
     return None
 
 
-_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Cutoff": 3, "No Data": 4}
-
-# For these degrees EVERY college is always listed (BAMS 123, BHMS 52,
-# BUMS 8), even when last year has no cutoff for the student's
-# category/gender - those are shown as "No Cutoff" at the end.
-FULL_LIST_DEGREES = {"BAMS", "BHMS", "BUMS"}
+_BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Data": 3}
 
 
 def predict(
@@ -208,13 +169,6 @@ def predict(
     gen = GENDER_MAP.get(gender)
     if cat is None or gen is None:
         return []
-
-    # EWS and Defence (D1/D2/D3) reservations apply only to Government
-    # colleges, so private colleges are never listed for these categories.
-    if cat in GOVT_ONLY_CATEGORIES:
-        if college_type and college_type.strip().title() == "Private":
-            return []
-        college_type = "Government"
 
     subset = df[(df["Degree"].isin(wanted)) & (df["cat"] == cat) & (df["gen"] == gen)].copy()
 
@@ -246,7 +200,7 @@ def predict(
             no_data_subset["College Status"].astype(str).str.strip().str.title().str.startswith(wanted_type)
         ]
 
-    if subset.empty and no_data_subset.empty and not df["Degree"].isin(wanted).any():
+    if subset.empty and no_data_subset.empty:
         return []
 
     rows: list[dict] = []
@@ -288,39 +242,30 @@ def predict(
             }
         )
 
-    # Other degrees list only colleges with a real last-year cutoff.
-    # BAMS / BHMS / BUMS list every college: the ones without a cutoff for
-    # this category/gender/mode are added as "No Cutoff", sorted to the end.
-    full_degrees = [d for d in wanted if d in FULL_LIST_DEGREES]
-    if full_degrees:
-        all_colleges = df[df["Degree"].isin(full_degrees)]
-        if college_type and college_type.strip().title() in COLLEGE_TYPES:
-            all_colleges = all_colleges[
-                all_colleges["College Status"].astype(str).str.strip().str.title().str.startswith(
-                    college_type.strip().title()
-                )
-            ]
-        already_shown = {(row["college_code"], row["degree"]) for row in rows}
-        for _, r in all_colleges.drop_duplicates(subset=["College Code", "Degree"]).iterrows():
-            key = (str(r["College Code"]), str(r["Degree"]))
-            if key in already_shown:
-                continue
-            already_shown.add(key)
-            rows.append(
-                {
-                    "college_code": key[0],
-                    "college_name": str(r["College Name"]),
-                    "status": str(r["College Status"]),
-                    "degree": key[1],
-                    "neet_score": None,
-                    "neet_sml": None,
-                    "air": None,
-                    "category_rank": None,
-                    "chance": "No Cutoff",
-                    "_cutoff_score": float("-inf"),
-                    "_cutoff_air": float("inf"),
-                }
-            )
+    # Colleges with no cutoff data at all: still surfaced, but clearly
+    # labelled "No Data" and sorted to the end (see _BAND_ORDER) rather than
+    # silently disappearing from results.
+    already_shown = {row["college_code"] for row in rows}
+    for _, r in no_data_subset.iterrows():
+        code = str(r["College Code"])
+        if code in already_shown:
+            continue
+        already_shown.add(code)
+        rows.append(
+            {
+                "college_code": code,
+                "college_name": str(r["College Name"]),
+                "status": str(r["College Status"]),
+                "degree": str(r["Degree"]),
+                "neet_score": None,
+                "neet_sml": None,
+                "air": None,
+                "category_rank": None,
+                "chance": "No Data",
+                "_cutoff_score": float("-inf"),
+                "_cutoff_air": float("inf"),
+            }
+        )
 
     # Sort: best band first; then most-competitive college first within a band.
     if mode == "score":
