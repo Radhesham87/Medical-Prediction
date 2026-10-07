@@ -16,7 +16,9 @@ def test_score_prediction_returns_bands():
         mode="score", score=580, air=None, degrees=["MBBS"], gender="Male", category="OPEN"
     )
     assert results, "expected at least one college for a strong OPEN score"
-    assert all(r["chance"] in {"High", "Moderate", "Low"} for r in results)
+    assert all(r["chance"] in {"High", "Moderate", "Low", "No Cutoff"} for r in results)
+    # every MBBS college is listed, even those without a cutoff
+    assert len({r["college_code"] for r in results}) == 70
     # OPEN category must not expose a category rank.
     assert all(r["category_rank"] is None for r in results)
     # Sorted best-first by serial number.
