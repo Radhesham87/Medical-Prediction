@@ -182,10 +182,10 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
 
 _BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Cutoff": 3, "No Data": 4}
 
-# For these degrees EVERY college is always listed (MBBS 70, BAMS 123, BHMS 52,
+# For these degrees EVERY college is always listed (MBBS 70, BDS 29, BAMS 123, BHMS 52, BPTH 117,
 # BUMS 8), even when last year has no cutoff for the student's
 # category/gender - those are shown as "No Cutoff" at the end.
-FULL_LIST_DEGREES = {"MBBS", "BAMS", "BHMS", "BUMS"}
+FULL_LIST_DEGREES = {"MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"}
 
 
 def predict(
@@ -289,7 +289,7 @@ def predict(
         )
 
     # Other degrees list only colleges with a real last-year cutoff.
-    # MBBS / BAMS / BHMS / BUMS list every college: the ones without a cutoff for
+    # MBBS / BDS / BAMS / BHMS / BUMS / BPTH list every college: the ones without a cutoff for
     # this category/gender/mode are added as "No Cutoff", sorted to the end.
     full_degrees = [d for d in wanted if d in FULL_LIST_DEGREES]
     if full_degrees:
