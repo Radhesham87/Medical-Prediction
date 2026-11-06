@@ -182,7 +182,7 @@ def _band_by_air(candidate: float, cutoff: float) -> Optional[str]:
 
 _BAND_ORDER = {"High": 0, "Moderate": 1, "Low": 2, "No Cutoff": 3, "No Data": 4}
 
-# For these degrees EVERY college is always listed (MBBS 70, BDS 29, BAMS 123, BHMS 52, BPTH 117,
+# For these degrees EVERY college is always listed (MBBS 70, BDS 29, BAMS 137, BHMS 56, BPTH 125,
 # BUMS 8), even when last year has no cutoff for the student's
 # category/gender - those are shown as "No Cutoff" at the end.
 FULL_LIST_DEGREES = {"MBBS", "BDS", "BAMS", "BHMS", "BUMS", "BPTH"}
